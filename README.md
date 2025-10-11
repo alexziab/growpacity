@@ -28,10 +28,10 @@ This package is designed as a wrapper around [OpTool](https://github.com/cdomini
 
 ### File Outputs
 
-- `{dirc}/dustkappa_{name}_a{amax}_q{q}.inp` — Absorption coefficients
-- `{dirc}/kappaRP_{name}_a{amax}_q{q}.dat` — Mean opacities
-- `{dirc}/q.dat`, `amax_um.dat`, `T_K.dat` — Grid definitions
-- `{dirc}/kR_cm2g.dbl`, `kP_cm2g.dbl` — Opacity arrays (binary)
+- Absorption coefficients (kappa_abs, kappa_sca, g)
+- Mean opacities (kR, kP) for each parameter combination
+- `q.dat`, `amax_um.dat`, `T_K.dat` — Grid definitions
+- `kR_cm2g.dbl`, `kP_cm2g.dbl` — Opacity arrays (binary)
 
 ### Example
 
