@@ -1,5 +1,5 @@
 # Growpacity
-Growpacity is a Python and C toolkit for calculating dust opacities in astrophysical environments. It provides a master class (`OpacityCalculator`) for generating, storing, and interpolating mean opacities (Rosseland and Planck) over customizable grids of grain size distributions, temperature, and power-law exponents.
+Growpacity is a Python and C toolkit for calculating dust opacities in astrophysical environments. It provides a class (`OpacityCalculator`) for generating, storing, and interpolating mean opacities (Rosseland and Planck) over customizable grids of grain size distributions, temperature, and power-law exponents.
 This package is designed as a wrapper around [OpTool](https://github.com/cdominik/optool), allowing users to specify grain composition and obtain temperature-, maximum grain size-, and dust size distribution-dependent mean opacities. The resulting tables are lightweight and optimized for use in radiation hydrodynamics and dust coagulation models, where grain size distributions evolve dynamically.
 
 **Note:** Growpacity does not introduce a new dust opacity model; it provides a computationally efficient framework for tabulating and interpolating opacities based on user-defined choices of grain composition and size distribution. The applicability of the results depends on the user's physical assumptions.
@@ -48,7 +48,6 @@ See `example.ipynb` for a step-by-step demonstration of generating and visualizi
 For scientific details and methodology, see the related publication:  
 **A computationally efficient dust opacity model suitable for coagulation models**  
 _Alexandros Ziampras, Ludwig-Maximilians-Universität München_  
-The method enables efficient tabulation and interpolation of Rosseland and Planck mean opacities for evolving dust size distributions, suitable for use in radiation hydrodynamics and coagulation models. Growpacity is not a new opacity model, but a tool for efficiently handling user-defined dust properties.  
 [arXiv link or DOI if available]
 
 ### References
@@ -57,3 +56,4 @@ The method enables efficient tabulation and interpolation of Rosseland and Planc
 - OpTool: [https://github.com/cdominik/optool](https://github.com/cdominik/optool)
 - See publication for further context and usage recommendations.
 
+*(This README was AI generated using GitHub Copilot.)*
