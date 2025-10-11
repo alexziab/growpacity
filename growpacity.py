@@ -235,6 +235,26 @@ class OpacityCalculator:
 
 @njit
 def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
+    """Given the arrays of q, amax, T, and kappa(q, amax, T),
+        evaluates kappa at the requested values using
+        trilinear interpolation.
+
+        Note that amax_arr is expected in μm, and T_arr in K.
+        This is done to match the output of OpacityCalculator.
+        However, amax (the requested value) is expected in cm,
+        and will be converted to μm internally.
+
+        This function is JIT-compiled with numba for speed.
+
+        Arguments:
+            q_arr:     1D array of powerlaw exponents
+            amax_arr:  1D array of maximum grain sizes [um]
+            T_arr:     1D array of temperatures [K]
+            kappa_arr: 3D array of opacities [cm^2/g]
+            q:         requested powerlaw exponent
+            amax:      requested maximum grain size [cm]
+            T:         requested temperature [K]
+    """
 
     def get_idx(arr, v):
         """
@@ -263,7 +283,7 @@ def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     lamax_arr = np.log10(amax_arr)
     lT_arr    = np.log10(T_arr)
 
-    lamax, lT = np.log10(amax), np.log10(T)
+    lamax, lT = np.log10(amax*1e4), np.log10(T)
 
     qLidx, qRidx = get_edges(q_arr.size,     get_idx(q_arr, q))
     aLidx, aRidx = get_edges(lamax_arr.size, get_idx(lamax_arr, lamax))
