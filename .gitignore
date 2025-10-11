@@ -1,3 +1,4 @@
 *.o
+*.inp
 *.dat
 *.dbl
