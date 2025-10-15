@@ -1,0 +1,45 @@
+[build-system]
+requires = ["meson-python", "setuptools", "wheel", "numpy"]
+build-backend = 'mesonpy'
+
+[project]
+name = 'growpacity'
+version = '0.0.1'
+description = 'Dust opacity toolkit for astrophysical hydrodynamical simulations'
+readme = { file = 'README.md', content-type = 'text/markdown' }
+keywords = [
+  "numerical",
+  "simulation",
+  "science",
+  "physics",
+  "astrophysics",
+  "astronomy",
+]
+authors = [
+  { name = "Alex Ziampras", email = "a.ziampras@lmu.de" },
+  { name = "Til Birnstiel", email = "til.birnstiel@lmu.de" },
+]
+maintainers = [
+  { name = "Alex Ziampras", email = "a.ziampras@lmu.de" },
+  { name = "Tilman Birnstiel", email = "til.birnstiel@lmu.de" },
+]
+license = { text = "GPLv3" }
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Fortran",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = ["matplotlib", "numpy", "numba", "astropy"]
+
+[project.urls]
+Repository = "https://github.com/alexziab/growpacity"
+Documentation = "https://github.com/alexziab/growpacity/README.md"
