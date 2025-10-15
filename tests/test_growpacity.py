@@ -14,9 +14,9 @@ def opacity_data():
         q_min=-4.5, q_max=-2.5, Nq=9,
         optool_args='', dirc='test-data/'
     )
-    OC.execute_optool(quiet=True)
-    OC.build_mean_opacities()
-    OC.compute_and_store_master_arrays()
+    OC.execute_optool(quiet=True, overwrite=True)
+    OC.build_mean_opacities(overwrite=True)
+    OC.compute_and_store_master_arrays(overwrite=True)
     kR_arr, kP_arr = OC.load_master_arrays()
     q    = OC.q
     amax = OC.amax.to_value('um')

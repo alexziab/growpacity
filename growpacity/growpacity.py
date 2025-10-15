@@ -101,7 +101,7 @@ class OpacityCalculator:
         full_name = f"{self.name}{sep}a{amax:.2e}_q{q:.2f}"
         return full_name
 
-    def execute_optool(self, quiet=True):
+    def execute_optool(self, quiet=True, overwrite=False):
         """Repeatedly calls OpTool over the range of amax and q requested.
             If quiet, suppressed OpTool output. Useful to hide all the dots."""
 
@@ -115,7 +115,7 @@ class OpacityCalculator:
             for q in self.q:
                 full_name = self.get_filename(amax, q)
                 filename  = f"{dirc}/dustkappa_{full_name}.inp"
-                if os.path.exists(filename): continue
+                if os.path.exists(filename) and not overwrite: continue
 
                 cmd = f'optool -a {amin} {amax} {-q} ' + self.optool_args
                 cmd += f' -o {dirc} -radmc {full_name}'
@@ -165,7 +165,6 @@ class OpacityCalculator:
 
                 # read absorption opacities from file
                 filename  = f"{dirc}/dustkappa_{full_name}.inp"
-                if not os.path.exists(filename): continue
 
                 kR, kP = self.__compute_mean_opacities(filename)
                 data = np.array([T.to_value('K'), kR.to_value('cm2/g'), kP.to_value('cm2/g')])
@@ -187,7 +186,6 @@ class OpacityCalculator:
             for a_idx, amax in enumerate(self.amax.to_value('um')):
                 full_name = self.get_filename(amax, q)
                 opac_name = f"{dirc}/kappaRP_{full_name}.dat"
-                if not os.path.exists(opac_name): continue
 
                 T_, kR, kP = np.genfromtxt(opac_name, unpack=True)
                 kR_arr[q_idx, a_idx] = kR
