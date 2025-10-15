@@ -4,21 +4,50 @@ import os
 from numba import njit
 
 def toQuantity(array, unit=None):
-    """Checks if an array is an astropy Quantity. Converts it to one if not.
-        In that case, unit must be provided in the form of either plain text
-        (compatible with astropy.units.Unit), or as an astropy.units.Unit.
+    """
+    Checks if an array is an astropy Quantity. Converts it to one if not.
+
+    In that case, `unit` must be provided in the form of either plain text
+    (compatible with astropy.units.Unit), or as an astropy.units.Unit.
+    
+    Arguments
+    ----------
+    array : array-like or astropy.units.Quantity
+        Input array or quantity.
+    unit : str or astropy.units.Unit, optional
+        The unit to convert to if `array` is not a Quantity.
+
+    Returns
+    -------
+    astropy.units.Quantity
+        The input array as a Quantity.
     """
     if isinstance(array, u.Quantity): return array.to(unit)
     else: return np.array(array) * u.Unit(unit)
 
 def BBflux(T=5780, wl=None):
-    """Returns the flux spectrum of a black body at wavelength λ and temperature T:
-        assuming f = exp(h*c/(λkT))
-            B(λ) = 2hc^2/λ^5 / (f - 1)
-            u(λ) = 2h^2c^3 / (kλ^6T^2) * exp / (exp-1)
-    Arguments:
-            T:  the temperature of the black body. Can be an astropy Quantity.
-            wl: the wavelengths to sample on. Can be an astropy Quantity (defaults to cm)."""
+    """
+    Returns the flux spectrum of a black body at wavelength λ and temperature T.
+    The flux is calculated assuming::
+
+        f = exp(h*c/(λkT))
+        B(λ) = 2hc^2/λ^5 / (f - 1)
+        u(λ) = 2h^2c^3 / (kλ^6T^2) * exp / (exp-1)
+
+    Arguments
+    ----------
+    T : array-like or astropy.units.Quantity
+        the temperature of the black body. Defaults to K.
+    wl : array-like or astropy.units.Quantity
+        the wavelengths to sample on. Defaults to cm.
+    
+    Returns
+    -------
+    B : astropy.units.Quantity [erg/(cm^2 s cm)]
+        the black body flux at the requested wavelengths
+    dB/dT : astropy.units.Quantity [erg/(cm^2 s K cm)]
+        the derivative of the black body flux with respect to temperature
+    """
 
     tmp = toQuantity(T, u.K)
     lam = toQuantity(wl, u.cm)
@@ -43,35 +72,51 @@ def BBflux(T=5780, wl=None):
     
                 
 class OpacityCalculator:
-    """Master class that handles the opacity calculations.
-        This is the meat of the code: basically call OpTool repeatedly 
-        over the range of grain size distributions requested, and then
-        compute Rosseland and Planck means and store them into files.
-        I'm defining it as a class, in case you would like to use it in
-        python format in another project where you want access to metadata.
-        
+    """
+    Master class that handles the opacity calculations.
+    This is the meat of the code: basically call OpTool repeatedly 
+    over the range of grain size distributions requested, and then
+    compute Rosseland and Planck means and store them into files.
+    I'm defining it as a class, in case you would like to use it in
+    python format in another project where you want access to metadata.
+    
     Input (when marked with [...], can be an astropy Quantity that defaults to unit "...")
-        amin: minimum grain size for all distributions[μm]
 
-        q_min:    smallest powerlaw exponent within the range of distributions
-        q_max:    largest  powerlaw exponent within the range of distributions
-        Nq:       number of samples between q_min and q_max. Linear spacing.
-        amax_min: smallest maximum grain size within the range of distributions [μm]
-        amax_max: largest  maximum grain size within the range of distributions [μm]
-        Namax:    number of samples between amax_min and amax_max. Logarithmic spacing.
-        T_min:    smallest temperature to sample when computing means [K]
-        T_max:    largest  temperature to sample when computing means [K]
-        NT:       number of samples between T_min and T_max. Logarithmic spacing.
-        optool_args: additional arguments to be passed to optool,
-            beyond grain size distributions (e.g., composition).
-        dirc:     directory to save the data
-            (about 20KB/file for absorption coefficients, 230B*NT/file for mean opacities).
-        name:     identifier to be appended to the file name.
+    Arguments
+    ----------
+    amin : float or astropy.units.Quantity [μm]
+        minimum grain size for all distributions
+    q_min : float
+        smallest powerlaw exponent within the range of distributions
+    q_max : float
+        largest  powerlaw exponent within the range of distributions
+    Nq : int
+        number of samples between q_min and q_max. Linear spacing.
+    amax_min : float or astropy.units.Quantity [μm]
+        smallest maximum grain size within the range of distributions
+    amax_max : float or astropy.units.Quantity [μm]
+        largest  maximum grain size within the range of distributions
+    Namax : int
+        number of samples between amax_min and amax_max. Logarithmic spacing.
+    T_min : float or astropy.units.Quantity [K]
+        smallest temperature to sample when computing means
+    T_max : float or astropy.units.Quantity [K]
+        largest  temperature to sample when computing means
+    NT : int
+        number of samples between T_min and T_max. Logarithmic spacing.
+    optool_args : str
+        additional arguments to be passed to optool,
+        beyond grain size distributions (e.g., composition).
+    dirc : str
+        directory to save the data
+        (about 20KB/file for absorption coefficients, 230B*NT/file for mean opacities).
+    name : str
+        identifier to be appended to the file name.
 
-        The complete filenames will be:
-            {dirc}/{name}_a{amax}_q{q}.inp for absorption coefficients
-            {dirc}/{name}_a{amax}_q{q}.dat for mean opacities
-        """
+    The complete filenames will be:
+        {dirc}/{name}_a{amax}_q{q}.inp for absorption coefficients
+        {dirc}/{name}_a{amax}_q{q}.dat for mean opacities
+    """
 
     def __init__(self, amin=0.1*u.um,
                  q_min=-4.5, q_max=-2.5, Nq=9,
@@ -92,9 +137,10 @@ class OpacityCalculator:
         self.name = name
 
     def get_filename(self, amax, q):
-        """Helper function that returns the file name
-            (excluding prepended 'dustkappa/kappaRP')
-            for a given amax and q.
+        """
+        Helper function that returns the file name
+        (excluding prepended 'dustkappa/kappaRP')
+        for a given amax and q.
         """
 
         sep = '_' if len(self.name) else ''
@@ -102,8 +148,10 @@ class OpacityCalculator:
         return full_name
 
     def execute_optool(self, quiet=True, overwrite=False):
-        """Repeatedly calls OpTool over the range of amax and q requested.
-            If quiet, suppressed OpTool output. Useful to hide all the dots."""
+        """
+        Repeatedly calls OpTool over the range of amax and q requested.
+        If quiet, suppressed OpTool output. Useful to hide all the dots.
+        """
 
         dirc = self.dirc
         name = self.name
@@ -125,8 +173,10 @@ class OpacityCalculator:
                 os.system(cmd)
     
     def __compute_mean_opacities(self, filename):
-        """Internal function that computes Rosseland and Planck means
-            from a given file with absorption coefficients."""
+        """
+        Internal function that computes Rosseland and Planck means
+        from a given file with absorption coefficients.
+        """
 
         # first skip to start of the file
         idx = 0
@@ -149,9 +199,11 @@ class OpacityCalculator:
         return kR, kP
 
     def build_mean_opacities(self, overwrite=False):
-        """Loop over all files of absorption coefficients and print ASCII
-            files with the respective temperature-dependent mean opacities.
-            If not overwrite, it skips existing files with that name."""
+        """
+        Loop over all files of absorption coefficients and print ASCII
+        files with the respective temperature-dependent mean opacities.
+        If not overwrite, it skips existing files with that name.
+        """
 
         dirc = self.dirc
         name = self.name
@@ -171,8 +223,10 @@ class OpacityCalculator:
                 np.savetxt(opac_name, data.T)
 
     def compute_master_arrays(self):
-        """Loads all files of mean opacities and combines them into master arrays
-            of κ(q, amax, T)."""
+        """
+        Loads all files of mean opacities and combines them into master arrays
+        of κ(q, amax, T).
+        """
 
         dirc = self.dirc
         name = self.name
@@ -194,9 +248,11 @@ class OpacityCalculator:
         return kR_arr, kP_arr
 
     def compute_and_store_master_arrays(self, overwrite=False):
-        """Stores 1D arrays of q, amax T, and the 3D arrays of 
-            kappa_Rosseland(q, amax, T) and kappa_Planck(q, amax, T).
-            If overwrite and a file exists, skip it."""
+        """
+        Stores 1D arrays of q, amax T, and the 3D arrays of 
+        kappa_Rosseland(q, amax, T) and kappa_Planck(q, amax, T).
+        If overwrite and a file exists, skip it.
+        """
         
         dirc = self.dirc
         have = os.path.exists
@@ -233,40 +289,54 @@ class OpacityCalculator:
 
 @njit
 def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
-    """Given the arrays of q, amax, T, and kappa(q, amax, T),
-        evaluates kappa at the requested values using
-        trilinear interpolation.
+    """
+    Given the arrays of q, amax, T, and kappa(q, amax, T),
+    evaluates kappa at the requested values using
+    trilinear interpolation.
 
-        Note that amax_arr is expected in μm, and T_arr in K.
-        This is done to match the output of OpacityCalculator.
-        However, amax (the requested value) is expected in cm,
-        and will be converted to μm internally.
+    Note that amax_arr is expected in μm, and T_arr in K.
+    This is done to match the output of OpacityCalculator.
+    However, amax (the requested value) is expected in cm,
+    and will be converted to μm internally.
 
-        This function is JIT-compiled with numba for speed.
+    This function is JIT-compiled with numba for speed.
 
-        Arguments:
-            q_arr:     1D array of powerlaw exponents
-            amax_arr:  1D array of maximum grain sizes [um]
-            T_arr:     1D array of temperatures [K]
-            kappa_arr: 3D array of opacities [cm^2/g]
-            q:         requested powerlaw exponent
-            amax:      requested maximum grain size [cm]
-            T:         requested temperature [K]
+    Arguments
+    ----------
+    q_arr
+        1D array of powerlaw exponents
+    amax_arr
+        1D array of maximum grain sizes [um]
+    T_arr
+        1D array of temperatures [K]
+    kappa_arr
+        3D array of opacities [cm^2/g]
+    q
+        requested powerlaw exponent
+    amax
+        requested maximum grain size [cm]
+    T
+        requested temperature [K]
+
+    Returns
+    -------
+    kappa
+        the interpolated opacity [cm^2/g]
     """
 
     def get_idx(arr, v):
         """
-            Assuming regular spacing, compute the index
-            to the left of the requested value using
-            a simple linear interpolation.
+        Assuming regular spacing, compute the index
+        to the left of the requested value using
+        a simple linear interpolation.
         """
         Amin, Amax, NA = arr.min(), arr.max(), arr.size
         return int((NA-1) * (v-Amin) / (Amax-Amin))
 
     def get_edges(N, idx):
         """
-            Returns the neighboring indices around the target value.
-            Also clamps the arrays to avoid over/undershooting.
+        Returns the neighboring indices around the target value.
+        Also clamps the arrays to avoid over/undershooting.
         """
         if idx < 0: return 0, 0 # undershooting
         if idx > N - 1: return N-1, N-1 # overshooting
