@@ -9,10 +9,10 @@ tags:
 authors:
   - name: Alexandros Ziampras
     orcid: 0000-0003-2966-0419
-    affiliation: 1
+    affiliation: [1,2]
   - name: Tilman Birnstiel
-    orcid: 0000-0000-0000-0000
-    affiliation: 1
+    orcid: 0000-0002-1899-8783
+    affiliation: [1,3]
 affiliations:
   - name: Ludwig-Maximilians-Universität München, Universitäts-Sternwarte, Scheinerstr. 1, 81679 München, Germany
     index: 1
@@ -66,3 +66,5 @@ We underscore that our intent is not to provide a new or more realistic dust opa
 
 AZ and TB acknowledge funding from the European Union under the Horizon Europe Research and Innovation Programme 101124282 (EARLYBIRD).  
 Views and opinions expressed are those of the authors only.
+
+# References
