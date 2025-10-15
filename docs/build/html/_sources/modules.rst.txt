@@ -1,4 +1,4 @@
-growpacity
+Module reference
 ==========
 
 .. toctree::
