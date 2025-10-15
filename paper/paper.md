@@ -26,12 +26,13 @@ bibliography: refs.bib
 
 # Summary
 
-`growpacity` is a Python and C toolkit for calculating dust opacities in astrophysical environments. It provides a framework for generating, storing, and interpolating Rosseland and Planck mean opacities over customizable grids of grain size distributions, temperature, and powerlaw exponents.
-This package is designed as a wrapper around [OpTool](https://github.com/cdominik/optool), allowing users to specify a grain composition and obtain tabulated temperature-, maximum grain size-, and dust size distribution-dependent mean opacities. The resulting tables are lightweight and optimized for use in radiation hydrodynamics and dust coagulation models, where grain size distributions evolve dynamically.
+`growpacity` is a Python and C toolkit for calculating dust opacities in astrophysical environments. It provides a framework for generating, storing, and interpolating Rosseland and Planck mean opacities over customizable grids of grain size distributions, temperatures, and powerlaw exponents.
+This package is designed as a wrapper around [OpTool](https://github.com/cdominik/optool), allowing users to specify a grain composition of their choice and obtain tabulated mean opacities. The resulting tables are lightweight and optimized for use in radiation hydrodynamics and dust coagulation models, where grain size distributions evolve dynamically.
 
 # Statement of need
 
-Radiation hydrodynamics simulations often require a dust opacity model under the assumption of a particular grain size or size distribution. It is however not straightforward to implement a dust opacity model that accounts for the dynamical evolution of this grain size distribution. 
+Radiation hydrodynamics simulations often require a dust opacity model under the assumption of a particular grain size or size distribution. It is however not straightforward to implement a dust opacity model that accounts for the dynamical evolution of this grain size distribution. This shortcoming is especially relevant in environments where dust coagulation is important, such as protoplanetary disks.
+
 With `growpacity`, we outline a method to construct such a model and provide a `python` package that interfaces to `OpTool` to compute temperature-, maximum grain size-, and dust size distribution-dependent mean opacities, tabulated in a lightweight format and complemented with efficient interpolation methods for usage in radiation hydrodynamics simulations.
 
 # Method
