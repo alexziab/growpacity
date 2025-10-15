@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import growpacity as op
 import astropy.units as u
+import astropy.constants as const
 from scipy.interpolate import interpn
 
 
@@ -48,3 +49,22 @@ def test_planck_opacity(opacity_data):
         [(qtest, np.log10(atest), np.log10(Ttest))],
         bounds_error=True)[0]
     assert np.isclose(ev1, ev2, rtol=1e-6)
+
+def test_black_body_flux():
+    T = 1000 * u.K
+    
+    wl = op.toQuantity(np.geomspace(0.1, 10000), u.um)
+    prefactor = 2 * const.h * const.c**2 / wl ** 5
+    arg = (const.h * const.c / (const.k_B * wl * T)).to_value('')
+    expr = np.expm1(arg)
+    BT = (prefactor / expr).to(u.erg/u.s/u.cm**3)
+
+    BT_op, uT_op = op.BBflux(T, wl=wl)
+    BT_op = BT_op.to(u.erg/u.s/u.cm**3)
+
+    assert np.allclose(BT, BT_op)
+
+def test_toQuantity():
+    arr = np.array([1, 10, 100])
+    qarr = op.toQuantity(arr, u.um)
+    assert np.all(qarr == arr * u.um)
