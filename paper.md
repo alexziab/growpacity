@@ -38,26 +38,26 @@ Standard tabulated opacities assume fixed grain size distributions, making them 
 
 # Method
 
-For a given grain composition and a grain size distribution with number density \( n(a) \propto a^q \) for grain sizes between \( a_{\min} \) and \( a_{\max} \), absorption and scattering opacities \( \kappa_{\text{abs}}(\nu) \) and \( \kappa_{\text{sca}}(\nu) \), as well as the asymmetry factor \( g(\nu) \), are computed using the [OpTool](https://ui.adsabs.harvard.edu/abs/2021ascl.soft04010D) package [@dominik-etal-2021].  
+For a given grain composition and a grain size distribution with number density $n(a) \propto a^q$ for grain sizes between $a_{\min}$ and $a_{\max}$, absorption and scattering opacities $\kappa_{\text{abs}}(\nu)$ and $\kappa_{\text{sca}}(\nu)$, as well as the asymmetry factor $g(\nu)$, are computed using the [OpTool](https://ui.adsabs.harvard.edu/abs/2021ascl.soft04010D) package [@dominik-etal-2021].  
 This calculation uses the Distribution of Hollow Spheres method [@min-etal-2005], and provides frequency-dependent opacities that are then integrated to obtain the Planck and Rosseland mean opacities:
 
-\[
+$$
 \kappa_P(T) = \frac{\int_0^\infty \kappa_{\text{abs}} B_\nu(T)\, d\nu}{\int_0^\infty B_\nu(T)\, d\nu}, \qquad
 \kappa_R(T) = \frac{\int_0^\infty u_\nu(T)\, d\nu}{\int_0^\infty [\kappa_{\text{abs}} + (1-g)\kappa_{\text{sca}}]^{-1} u_\nu(T)\, d\nu},
-\]
-where \( u_\nu(T) = (dB_\nu/dT)_T \) and \( B_\nu(T) \) is the Planck function.
+$$
+where $u_\nu(T) = (dB_\nu/dT)_T$ and $B_\nu(T)$ is the Planck function.
 
-Fixing the grain composition and \( a_{\min} \), `growpacity` computes mean opacities over a 3D grid of \( a_{\max} \), \( q \), and \( T \), tabulating \( \kappa_R(q, a_{\max}, T) \) and \( \kappa_P(q, a_{\max}, T) \).  
-These tables are then suitable for use in dust evolution models where \( a_{\max} \) and \( q \) evolve dynamically [@birnstiel-etal-2017; @stammler-birnstiel-2022; @pfeil-etal-2024; @robinson-etal-2024].
+Fixing the grain composition and $a_{\min}$, `growpacity` computes mean opacities over a 3D grid of $a_{\max}$, $q$, and $T$, tabulating $\kappa_R(q, a_{\max}, T)$ and $\kappa_P(q, a_{\max}, T)$.  
+These tables are then suitable for use in dust evolution models where $a_{\max}$ and $q$ evolve dynamically [@birnstiel-etal-2017; @stammler-birnstiel-2022; @pfeil-etal-2024; @robinson-etal-2024].
 
 # Interpolation and performance
 
-Interpolation is performed on \(\log \kappa\) in the space of \((q, \log a_{\max}, \log T)\) using a trilinear interpolation scheme.  
-The sampling is uniform in this space, taking advantage of the approximately power-law dependence \(\kappa \propto T^b\), which is accurate for small grains [@bell-lin-1994; @semenov-etal-2003].  
+Interpolation is performed on $\log \kappa$ in the space of $(q, \log a_{\max}, \log T)$ using a trilinear interpolation scheme.  
+The sampling is uniform in this space, taking advantage of the approximately power-law dependence $\kappa \propto T^b$, which is accurate for small grains [@bell-lin-1994; @semenov-etal-2003].  
 This design ensures positive opacities even during limited extrapolation.  
-Because the grid spacing is regular, the indices of bounding grid points can be computed analytically, reducing lookup complexity from \(\mathcal{O}(\log N)\) to \(\mathcal{O}(1)\).  
+Because the grid spacing is regular, the indices of bounding grid points can be computed analytically, reducing lookup complexity from $\mathcal{O}(\log N)$ to $\mathcal{O}(1)$.  
 
-A typical dataset with \( q \in [-4.5, -2.5] \) (Δq = 0.25), \( a_{\max} \in [0.1\,\mu\text{m}, 1\,\text{m}] \) (two samples per decade), and \( T \in [1, 2000]\,\text{K} \) (100 samples) results in two arrays of \( 9\times15\times100 \) elements—about 220 kB total.  
+A typical dataset with $q \in [-4.5, -2.5]$ (Δq = 0.25), $a_{\max} \in [0.1\,\mu\text{m}, 1\,\text{m}]$ (two samples per decade), and $T \in [1, 2000]\,\text{K}$ (100 samples) results in two arrays of $9\times15\times100$ elements—about 220 kB total.
 
 # Implementation
 
