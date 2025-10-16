@@ -10,7 +10,6 @@ Requirements
 - NumPy
 - Astropy
 - Numba
-- SciPy
 - `OpTool <https://github.com/cdominik/OpTool>`_
 
 Installation
