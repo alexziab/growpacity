@@ -123,19 +123,35 @@ class OpacityCalculator:
                  q_min=-4.5, q_max=-2.5, Nq=9,
                  amax_min=0.1*u.um, amax_max=1e4*u.um, Namax=14,
                  T_min=1*u.K, T_max=3000*u.K, NT=100,
-                 optool_args='', dirc='data/', name=''):
-        
-        self.amin = toQuantity(amin, u.um)
-        self.q = np.linspace(q_min, q_max, Nq)
-        self.amax = np.geomspace(toQuantity(amax_min, u.um),
-                                toQuantity(amax_max, u.um), Namax)
-        self.T = np.geomspace(toQuantity(T_min, u.K),
-                               toQuantity(T_max, u.K), NT)
-        
-        self.optool_args = optool_args
+                 optool_args='', dirc='data/', name='', read_in=False):
 
+        self.optool_args = optool_args
         self.dirc = dirc
         self.name = name
+
+        if read_in:
+            self.q = np.loadtxt(f'{dirc}/q.dat', skiprows=1)
+            self.amax = np.loadtxt(f'{dirc}/amax_um.dat', skiprows=1) * u.um
+            self.T = np.loadtxt(f'{dirc}/T_K.dat', skiprows=1) * u.K
+
+            # here we assume that amin is the smallest bin in amax if it is set to None
+            # but this should only matter for re-calling optool, not for the read-in
+            # opacities
+            if amin is None:
+                self.amin = self.amax[0]
+            else:
+                self.amin = toQuantity(amin, u.um)
+
+            self.load_master_arrays()
+        else:
+            self.amin = toQuantity(amin, u.um)
+            self.q = np.linspace(q_min, q_max, Nq)
+            self.amax = np.geomspace(toQuantity(amax_min, u.um),
+                                     toQuantity(amax_max, u.um), Namax)
+            self.T = np.geomspace(toQuantity(T_min, u.K),
+                                  toQuantity(T_max, u.K), NT)
+
+
 
     def get_filename(self, amax, q):
         """

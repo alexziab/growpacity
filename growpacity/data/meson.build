@@ -1,5 +1,5 @@
 datafiles = files([
-    'default-data.tar.gz'
+    'default-data.zip'
 ])
 
 py3.install_sources(
