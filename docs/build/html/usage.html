@@ -91,9 +91,9 @@
 </section>
 <section id="example-building-an-opacity-model">
 <h2>Example: building an opacity model<a class="headerlink" href="#example-building-an-opacity-model" title="Permalink to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">growpacity</span>
-
-<span class="n">OC</span> <span class="o">=</span> <span class="n">growpacity</span><span class="o">.</span><span class="n">OpacityCalculator</span><span class="p">(</span>
+<p>First, we create an instance of the <cite>OpacityCalculator</cite> class, specifying
+the desired parameters for the grain size distribution and temperature range.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">OC</span> <span class="o">=</span> <span class="n">growpacity</span><span class="o">.</span><span class="n">OpacityCalculator</span><span class="p">(</span>
     <span class="n">amin</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="c1"># minimum grain size [microns]</span>
     <span class="n">amax_min</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="c1"># smallest maximum grain size [microns]</span>
     <span class="n">amax_max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="c1"># largest maximum grain size [microns]</span>
@@ -107,10 +107,37 @@
     <span class="n">dirc</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span><span class="p">,</span> <span class="c1"># directory to store opacity files</span>
     <span class="n">optool_args</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="c1"># additional arguments to pass to OpTool (e.g., composition)</span>
 <span class="p">)</span>
-
-<span class="n">OC</span><span class="o">.</span><span class="n">execute_optool</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># run OpTool to compute frequency-dependent opacities</span>
+</pre></div>
+</div>
+<p>We now compute and store the opacities.
+In principle, you only need to run this once per set of parameters;
+the results will be saved in the specified directory and can be reused later.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">OC</span><span class="o">.</span><span class="n">execute_optool</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># run OpTool to compute frequency-dependent opacities</span>
 <span class="n">OC</span><span class="o">.</span><span class="n">build_mean_opacities</span><span class="p">()</span> <span class="c1"># calculate Rosseland and Planck mean opacities</span>
 <span class="n">OC</span><span class="o">.</span><span class="n">compute_and_store_master_arrays</span><span class="p">()</span> <span class="c1"># store results in arrays</span>
+</pre></div>
+</div>
+<p>We can now access the computed opacity tables with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">q</span>      <span class="o">=</span> <span class="n">OC</span><span class="o">.</span><span class="n">q</span> <span class="c1"># array of power-law indices with Nq elements</span>
+<span class="n">amax</span>   <span class="o">=</span> <span class="n">OC</span><span class="o">.</span><span class="n">amax</span><span class="o">.</span><span class="n">to_value</span><span class="p">(</span><span class="s1">&#39;micron&#39;</span><span class="p">)</span> <span class="c1"># array of maximum grain sizes with Namax elements</span>
+<span class="n">T</span>      <span class="o">=</span> <span class="n">OC</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">to_value</span><span class="p">(</span><span class="s1">&#39;K&#39;</span><span class="p">)</span> <span class="c1"># array of temperatures with NT elements</span>
+<span class="n">kR</span><span class="p">,</span> <span class="n">kP</span> <span class="o">=</span> <span class="n">OC</span><span class="o">.</span><span class="n">load_master_arrays</span><span class="p">()</span> <span class="c1">#each has shape (Nq, Namax, NT)</span>
+</pre></div>
+</div>
+<p>The 3D arrays <code class="docutils literal notranslate"><span class="pre">kR</span></code> and <code class="docutils literal notranslate"><span class="pre">kP</span></code> contain the Rosseland and Planck mean opacities, respectively.
+You can now interpolate to get the Rosseland and Planck mean opacities for any combination of
+power-law index, maximum grain size, and temperature within the specified ranges.</p>
+<p>Note that the interpolating function expects all arguments in CGS units (i.e., amax in cm).
+We still use amax in microns otherwise for convenience when interfacing to OpTool.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">q_test</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.65</span>
+<span class="n">amax_test</span> <span class="o">=</span> <span class="mf">0.55</span> <span class="c1"># microns</span>
+<span class="n">T_test</span> <span class="o">=</span> <span class="mi">150</span> <span class="c1"># K</span>
+
+<span class="c1"># Rosseland mean opacity</span>
+<span class="n">kR_test</span> <span class="o">=</span> <span class="n">growpacity</span><span class="o">.</span><span class="n">evaluate_mean_opacity</span><span class="p">((</span><span class="n">q</span><span class="p">,</span> <span class="n">amax</span><span class="p">,</span> <span class="n">T</span><span class="p">),</span> <span class="n">kR</span><span class="p">,</span> <span class="n">q_test</span><span class="p">,</span> <span class="n">amax_test</span><span class="o">/</span><span class="mf">1e4</span><span class="p">,</span> <span class="n">T_test</span><span class="p">)</span>
+
+<span class="c1"># Planck mean opacity</span>
+<span class="n">kP_test</span> <span class="o">=</span> <span class="n">growpacity</span><span class="o">.</span><span class="n">evaluate_mean_opacity</span><span class="p">((</span><span class="n">q</span><span class="p">,</span> <span class="n">amax</span><span class="p">,</span> <span class="n">T</span><span class="p">),</span> <span class="n">kP</span><span class="p">,</span> <span class="n">q_test</span><span class="p">,</span> <span class="n">amax_test</span><span class="o">/</span><span class="mf">1e4</span><span class="p">,</span> <span class="n">T_test</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
