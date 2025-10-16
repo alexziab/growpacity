@@ -64,7 +64,8 @@ def BBflux(T=5780, wl=None):
     B = B.to('erg/(cm2*s *cm)')
 
     constant = 2*h**2*c**3/(kB*lam**6*tmp**2)
-    frac = np.exp(expr)/np.expm1(expr)**2
+    with np.errstate(over='ignore'):
+        frac = np.exp(expr)/np.expm1(expr)**2
     dBdT = constant * frac
     dBdT = dBdT.to('erg/(cm2*s*K *cm)')
 
@@ -384,4 +385,55 @@ def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     lkappa = lkappaL * wTL + lkappaR * wTR
 
     kappa = 10.0 ** lkappa
+    return kappa
+
+def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
+    """
+    Wrapper around the numba-jitted function `evaluate_mean_opacity`
+    to allow for array-like inputs for q, amax, and T.
+
+    Arguments
+    ----------
+    q_arr : 1D array
+        1D array of powerlaw exponents
+    amax_arr : 1D array
+        1D array of maximum grain sizes [um]
+    T_arr : 1D array
+        1D array of temperatures [K]
+    kappa_arr : 3D array
+        3D array of opacities [cm^2/g]
+    q : float or array-like
+        requested powerlaw exponent
+    amax : float or array-like
+        requested maximum grain size [cm]
+    T : float or array-like
+        requested temperature [K]
+
+    Returns
+    -------
+    kappa
+        the interpolated opacity [cm^2/g]
+    """
+
+    q_ = np.atleast_1d(q)
+    amax_ = np.atleast_1d(amax)
+    T_ = np.atleast_1d(T)
+    kappa = __evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_)
+    if kappa.size == 1: return kappa[0,0,0]
+    return kappa
+
+@njit
+def __evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_):
+    """
+    Internal function that loops over all requested values (as arrays)
+    and calls the jitted `evaluate_mean_opacity` function.
+    """
+    shape = (q_.size, amax_.size, T_.size)
+    kappa = np.zeros(shape, dtype=float)
+
+    for k in range(q_.size):
+        for j in range(amax_.size):
+            for i in range(T_.size):
+                kappa[k,j,i] = evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr,
+                                                    q_[k], amax_[j], T_[i])
     return kappa

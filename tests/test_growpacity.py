@@ -50,6 +50,21 @@ def test_planck_opacity(opacity_data):
         bounds_error=True)[0]
     assert np.isclose(ev1, ev2, rtol=1e-6)
 
+def test_rosseland_opacities(opacity_data):
+    arrs, kR_arr, kP_arr = opacity_data
+    qtest, atest, Ttest = np.array([-2.65, -3.1]), 0.5, np.array([120, 150, 2000])
+
+    ev1 = op.evaluate_mean_opacities(*arrs, kR_arr, qtest, atest/1e4, Ttest)
+
+    x, y, z = np.meshgrid(qtest, np.log10(atest), np.log10(Ttest), indexing='ij')
+    points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
+    ev2 = 10 ** interpn(
+        (arrs[0], np.log10(arrs[1]), np.log10(arrs[2])),
+        np.log10(kR_arr),
+        points,
+        bounds_error=True).reshape(x.shape)
+    assert np.allclose(ev1, ev2, rtol=1e-6)
+
 def test_black_body_flux():
     T = 1000 * u.K
     
