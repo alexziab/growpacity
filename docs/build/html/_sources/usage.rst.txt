@@ -21,18 +21,9 @@ the desired parameters for the grain size distribution and temperature range.
 .. code-block:: python
 
     OC = growpacity.OpacityCalculator(
-        amin=0.1, # minimum grain size [microns]
-        amax_min=0.1, # smallest maximum grain size [microns]
         amax_max=1.0, # largest maximum grain size [microns]
-        q_min=-4.5, # smallest power-law index
-        q_max=-2.5, # largest power-law index
-        Nq=5, # number of power-law indices to sample
         Namax=3, # number of maximum grain sizes to sample
-        T_min=1, # lowest temperature [K]
-        T_max=1000, # highest temperature [K]
-        NT=100, # number of temperatures to sample
         dirc="./data", # directory to store opacity files
-        optool_args="", # additional arguments to pass to OpTool (e.g., composition)
     )
 
 We now compute and store the opacities.
@@ -45,7 +36,32 @@ the results will be saved in the specified directory and can be reused later.
     OC.build_mean_opacities() # calculate Rosseland and Planck mean opacities
     OC.compute_and_store_master_arrays() # store results in arrays
 
-We can now access the computed opacity tables with:
+The computations may take a few minutes depending on the parameters.
+
+You will now find the following files in the specified directory:
+
+- ``dustkappa...inp`` (ASCII):
+  OpTool output files for each combination of power-law index ``q``
+  and maximum grain size ``amax``. Compatible with `RADMC-3D <https://github.com/dullemond/radmc3d-2.0>`_.
+
+- ``kappaRP...dat`` (binary):
+  Contain the Rosseland and Planck mean opacities as a function of temperature,
+  for each combination of power-law index ``q`` and maximum grain size ``amax``.
+
+- ``{q, amax_um, T_K}.dat`` (ASCII):
+  Text files containing the sampled values of power-law index, maximum grain size (in microns),  
+  and temperature (in Kelvin). The first line in each file indicates the number of sampled values.
+
+- ``{kR, kP}_cm2g.dbl`` (binary):
+  Files containing the 3D arrays of Rosseland and Planck mean opacities,
+  with shape ``(Nq, Namax, NT)``.
+
+Example: loading and using pre-computed opacities
+-------------------------------------------------
+
+After having computed and stored the opacities once, you can load them in a new python session
+without needing to recompute them, as long as you specify the same parameters to the `OpacityCalculator` class.
+We can access the computed opacity tables with:
 
 .. code-block:: python
 
@@ -73,6 +89,18 @@ We still use amax in microns otherwise for convenience when interfacing to OpToo
     # Planck mean opacity
     kP_test = growpacity.evaluate_mean_opacity((q, amax, T), kP, q_test, amax_test/1e4, T_test)
 
+The module also provides a convenience function that wraps ``evaluate_mean_opacity``
+for array-like inputs:
+
+.. code-block:: python
+
+    q_tests = -3.5
+    amax_tests = np.array([0.1, 0.5]) # microns
+    T_tests = [100, 200, 1000] # K
+
+    # Rosseland mean opacities
+    kR_tests = growpacity.evaluate_mean_opacity_array((q, amax, T), kR, \
+                            q_tests, amax_tests/1e4, T_tests)
 
 Notes
 -----
