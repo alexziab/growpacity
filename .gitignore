@@ -2,3 +2,6 @@
 *.inp
 *.dat
 *.dbl
+__pycache__
+.ipynb_checkpoints
+.coverage
