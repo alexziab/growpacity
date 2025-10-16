@@ -340,7 +340,7 @@ def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
         Also clamps the arrays to avoid over/undershooting.
         """
         if idx < 0: return 0, 0 # undershooting
-        if idx > N - 1: return N-1, N-1 # overshooting
+        if idx >= N - 1: return N-1, N-1 # overshooting
         Lidx = min(max(idx, 0), N-1) # normal
         return Lidx, Lidx+1
 
