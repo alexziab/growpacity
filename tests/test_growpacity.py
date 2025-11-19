@@ -153,3 +153,17 @@ def test_C(tmp_opacity_dir, opacity_data):
     ev2 = op.growpacity_c.rosseland_opacity(qtest, atest/1e4, Ttest)
 
     assert np.allclose(ev1, ev2, rtol=1e-6)
+
+def test_C_read_in(tmp_opacity_dir, opacity_data):
+
+    # read in the data using the C library
+    oldcwd = os.getcwd()
+    try:
+        os.chdir(tmp_opacity_dir)
+        op.growpacity_c.read_opacity_data()
+    finally:
+        os.chdir(oldcwd)
+
+    # read in the data using python: test that amin evaluates to the smallest amax
+    OC = op.OpacityCalculator(dirc=tmp_opacity_dir, amin=None, read_in=True)
+    assert np.isclose(OC.amax.min().to_value('um'), 0.1) # for this test
