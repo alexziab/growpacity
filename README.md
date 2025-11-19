@@ -16,6 +16,33 @@ This package is designed as a wrapper around [OpTool](https://github.com/cdomini
     - High-performance routines for loading precomputed opacity arrays and evaluating mean opacities via trilinear interpolation.
     - Example usage and benchmarking included in `growpacity.c`.
 
+### Installation
+
+`growpacity` ships with `optool` as a git submodule. To install, clone the repository with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/alexziab/growpacity.git
+```
+
+Then install `optool` by following the instructions in the `optool/` directory. Typically, this will look like:
+
+```bash
+cd growpacity/optool
+make multi=true
+```
+
+Important: Ensure that the `optool` binary is in your system's PATH for `growpacity` to function correctly (i.e., you can run the command `optool` from any directory). This can be done by running `make install bindir=~/bin/` from the `optool` directory, adjusting the path as needed, or adding it to your PATH manually:
+
+```bash
+export PATH=$PATH:/path/to/optool
+```
+
+Finally, install the `growpacity` Python package by navigating to the parent directory and running:
+
+```bash
+pip install .
+```
+
 ### Typical Workflow
 
 1. **Generate Opacity Tables:**  
