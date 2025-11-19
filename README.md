@@ -22,6 +22,8 @@ This package is designed as a wrapper around [OpTool](https://github.com/cdomini
 
 ```bash
 git clone --recurse-submodules https://github.com/alexziab/growpacity.git
+cd growpacity
+git submodule update
 ```
 
 Then install `optool` by following the instructions in the `optool/` directory. Typically, this will look like:
@@ -41,6 +43,24 @@ Finally, install the `growpacity` Python package by navigating to the parent dir
 
 ```bash
 pip install .
+```
+
+Done correctly, the file structure should look like this:
+
+```growpacity/
+├── growpacity/
+│   ├── __init__.py
+│   ├── growpacity.c
+│   ├── optool/
+│   │   └── ...
+│   └── ...
+├── pyproject.toml
+├── README.md
+├── docs/
+│   └── ...
+├── tests/
+│   └── ...
+└── ...
 ```
 
 ### Typical Workflow
