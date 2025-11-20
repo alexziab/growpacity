@@ -1,7 +1,10 @@
 import numpy as np
 from astropy import constants as const, units as u
 import os
-from numba import njit
+try: from numba import njit
+except ImportError: # numba is optional
+    print("Numba not found. evaluation of mean opacities will be MUCH slower.")
+    def njit(func): return func
 
 def toQuantity(array, unit=None):
     """

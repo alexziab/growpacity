@@ -38,7 +38,10 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Physics",
 ]
-dependencies = ["matplotlib", "numpy", "numba", "astropy"]
+dependencies = ["numpy", "astropy"]
+
+[project.optional-dependencies]
+numba = ["numba"]
 
 [project.urls]
 Repository = "https://github.com/alexziab/growpacity"
