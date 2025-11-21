@@ -3,20 +3,71 @@ from astropy import constants as const, units as u
 import os
 try:
     from scipy.interpolate import interpn
-    __have_scipy = True
-except ImportError:
-    __have_scipy = False
+    have_scipy = True
+except ModuleNotFoundError:
+    have_scipy = False
 try:
     from numba import njit
-    __have_numba = True
-except ImportError: # numba is optional
-    __have_numba = False
-    if not __have_scipy:
+    have_numba = True
+except ModuleNotFoundError: # numba is optional
+    have_numba = False
+    def njit(func): return func
+    if not have_scipy:
         print("Numba not found. Evaluation of mean opacities will be slower, unless you have scipy installed.")
-        def njit(func): return func
     else:
         print("Numba not found. Falling back to scipy for interpolation of mean opacities.")
 
+
+def read_optool_file(filename):
+    """
+    Rreads an optool output file and returns
+    the wavelength, absorption, scattering, and asymmetry coefficients.
+    """
+
+    # first skip to start of the file
+    idx = 0
+    with open(filename, 'r') as f:
+        while idx < 100:
+            l = f.readline()
+            if not l.startswith('#'): break
+            idx += 1
+        idx += 2 # radmc format lines
+
+    # read data and apply units
+    wl, kabs, ksca, g = np.genfromtxt(filename, skip_header=idx, unpack=True)
+    wl, kabs, ksca = wl * u.um, kabs * u.cm**2/u.g, ksca * u.cm**2/u.g
+
+    return wl, kabs, ksca, g
+
+
+def compute_mean_opacities(T, filename) :
+    """
+    Computes Rosseland and Planck means
+    from a given file with absorption coefficients.
+    Arguments
+    ----------
+    T : array-like or astropy.units.Quantity [K]
+        array of temperatures at which to compute the means.
+    filename : str
+        path to the file with absorption coefficients.
+    Returns
+    -------
+    kR : astropy.units.Quantity [cm^2/g]
+        Rosseland mean opacities at the requested temperatures.
+    kP : astropy.units.Quantity [cm^2/g]
+        Planck mean opacities at the requested temperatures.
+    """
+
+    wl, kabs, ksca, g = read_optool_file(filename)
+
+    T_ = toQuantity(np.atleast_1d(T), u.K)
+
+    # compute Rosseland and Planck means
+    B, dB = BBflux(T_[:,None], wl=wl)
+    def trapz(y, x): return np.trapezoid(y, x=x, axis=1)
+    kR = (trapz(dB, wl) / trapz(dB/(kabs+ksca*(1-g)), wl)).to('cm2/g')
+    kP = (trapz(B*kabs, wl) / trapz(B, wl)).to('cm2/g')
+    return kR, kP
 
 def toQuantity(array, unit=u.Unit('')):
     """
@@ -210,36 +261,9 @@ class OpacityCalculator:
                 cmd += f' -o {dirc} -radmc {full_name}'
                 if quiet or suppress_dots:
                     cmd += ' >/dev/null 2>&1' # ignore optool output
-                # cmd += ' &' # run in background. Dev only, remove for prod
 
                 if not quiet: print(f'Running: {cmd}')
                 os.system(cmd)
-    
-    def __compute_mean_opacities(self, filename):
-        """
-        Internal function that computes Rosseland and Planck means
-        from a given file with absorption coefficients.
-        """
-
-        # first skip to start of the file
-        idx = 0
-        with open(filename, 'r') as f:
-            while idx < 100:
-                l = f.readline()
-                if not l.startswith('#'): break
-                idx += 1
-            idx += 2 # radmc format lines
-
-        # read data and apply units
-        wl, kabs, ksca, g = np.genfromtxt(filename, skip_header=idx, unpack=True)
-        wl, kabs, ksca = wl * u.um, kabs * u.cm**2/u.g, ksca * u.cm**2/u.g
-
-        # compute Rosseland and Planck means
-        B, dB = BBflux(self.T[:,None], wl=wl)
-        def trapz(y, x): return np.trapezoid(y, x=x, axis=1)
-        kR = (trapz(dB, wl) / trapz(dB/(kabs+ksca*(1-g)), wl)).to('cm2/g')
-        kP = (trapz(B*kabs, wl) / trapz(B, wl)).to('cm2/g')
-        return kR, kP
 
     def build_mean_opacities(self, overwrite=False):
         """
@@ -249,8 +273,7 @@ class OpacityCalculator:
         """
 
         dirc = self.dirc
-        name = self.name
-        T    = self.T.to('K')
+        T_K  = self.T.to_value('K')
 
         for amax in self.amax.to_value('cm'):
             for q in self.q:
@@ -261,8 +284,10 @@ class OpacityCalculator:
                 # read absorption opacities from file
                 filename  = f"{dirc}/dustkappa_{full_name}.inp"
 
-                kR, kP = self.__compute_mean_opacities(filename)
-                data = np.array([T.to_value('K'), kR.to_value('cm2/g'), kP.to_value('cm2/g')])
+                kR, kP = compute_mean_opacities(self.T, filename)
+                kR_cm2g = kR.to_value('cm2/g')
+                kP_cm2g = kP.to_value('cm2/g')
+                data = np.array([T_K, kR_cm2g, kP_cm2g])
                 np.savetxt(opac_name, data.T)
 
     def compute_master_arrays(self):
@@ -428,7 +453,8 @@ def __evaluate_mean_opacity_numba(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T)
     return kappa
 
 @njit
-def __evaluate_mean_opacities_numba(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_):
+def __evaluate_mean_opacities_numba(q_arr, amax_arr, T_arr, kappa_arr,
+                                    q_, amax_, T_):
     """
     Internal function that loops over all requested values (as arrays)
     and calls the (normally) jitted `__evaluate_mean_opacity_numba` function.
@@ -443,7 +469,8 @@ def __evaluate_mean_opacities_numba(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_
                                                     q_[k], amax_[j], T_[i])
     return kappa
 
-def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T, use_numba=True):
+def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr,
+                            q, amax, T, use_scipy=False):
     """
     Wrapper around either:
         the numba-jitted function `__evaluate_mean_opacity_numba`
@@ -467,9 +494,9 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T, use_n
     T : float or array-like
         requested temperature [K]
 
-    use_numba : bool, optional [True]
-        Whether to use the numba-jitted function for evaluation.
-        If False, uses the scipy-based function.
+    use_scipy : bool, optional [False]
+        Whether to use the scipy-based function for evaluation.
+        If False (default), uses the numba-jitted function.
         The scipy function is used automatically if numba is not installed,
         and might be faster for very large arrays.
         If both numba and scipy are not installed, the function falls back
@@ -486,19 +513,22 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T, use_n
     T_ = np.atleast_1d(T)
 
     args = (q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_)
-    use_scipy = __have_scipy and (not __have_numba or (not use_numba))
-    if use_scipy: kappa = __evaluate_mean_opacities_scipy(*args)
-    else:         kappa = __evaluate_mean_opacities_numba(*args)
-    if kappa.size == 1: return kappa[0,0,0]
+    use_sp = have_scipy and use_scipy
+    if use_sp: kappa = __evaluate_mean_opacities_scipy(*args)
+    else:      kappa = __evaluate_mean_opacities_numba(*args)
+    if kappa.size == 1: return kappa[0,0,0] # return scalar
     return kappa
 
-def __evaluate_mean_opacities_scipy(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
+def __evaluate_mean_opacities_scipy(q_arr, amax_arr, T_arr, kappa_arr,
+                                    q, amax, T):
     """
     Given the arrays of q, amax, T, and kappa(q, amax, T),
     evaluates kappa at the requested values using
     scipy's interpn function.
 
     Note that amax_arr is expected in cm, and T_arr in K.
+    Contrary to the numba version, this function cannot handle
+    clamping of out-of-bounds values, and will return NaN for those.
 
     Arguments
     ----------
@@ -526,5 +556,8 @@ def __evaluate_mean_opacities_scipy(q_arr, amax_arr, T_arr, kappa_arr, q, amax, 
     points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
     kappa = 10 ** interpn(
         (q_arr, np.log10(amax_arr), np.log10(T_arr)),
-        np.log10(kappa_arr), points, bounds_error=False, fill_value=np.nan).reshape(x.shape)
+        np.log10(kappa_arr), points,
+        bounds_error=False, fill_value=np.nan).reshape(x.shape)
+    if np.any(np.isnan(kappa)):
+        print("Warning: some values are out of bounds and returned NaN.")
     return kappa

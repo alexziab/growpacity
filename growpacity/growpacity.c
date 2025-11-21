@@ -66,7 +66,7 @@ void ReadOpacityData() {
 	Reads opacity data from files. Also allocates memory for arrays.
 	Files:
 		q.dat       - first line number of points, then q values
-		amax_um.dat - first line number of points, then amax values in microns
+		amax_cm.dat - first line number of points, then amax values in cm
 		T_K.dat     - first line number of points, then T values in K
 		kR_cm2g.dbl - binary file with Rosseland mean opacities
 		kP_cm2g.dbl - binary file with Planck mean opacities
@@ -75,7 +75,7 @@ void ReadOpacityData() {
 
 	// read grid arrays
 	ReadArray("q.dat", &q_arr, &Nq, 0);
-	ReadArray("amax_um.dat", &log_amax_arr, &Namax, 1);
+	ReadArray("amax_cm.dat", &log_amax_arr, &Namax, 1);
 	ReadArray("T_K.dat", &log_T_arr, &NT, 1);
 
 	// compute spacing, necessary for interpolation
@@ -115,14 +115,13 @@ void ReadOpacityData() {
 double EvaluateRosselandOpacityArray(double q, double amax, double T) {
 	/*
 	Expects arguments in cgs: amax [cm], T [K].
-	The function then uses amax in microns internally.
 	This function computes the Rosseland mean opacity
 	by trilinear interpolation in (q, log(amax), log(T)) space
 	in the precomputed array.
 	*/
 
-	// convert amax to microns and take log for interpolation
-	const double la = log(amax*1e4);
+	// take log for interpolation
+	const double la = log(amax);
 	const double lT = log(T);
 
 	// find left indices for interpolation
@@ -170,14 +169,13 @@ double EvaluateRosselandOpacityArray(double q, double amax, double T) {
 double EvaluatePlanckOpacityArray(double q, double amax, double T) {
 	/*
 	Expects arguments in cgs: amax [cm], T [K].
-	The function then uses amax in microns internally.
 	This function computes the Planck mean opacity
 	by trilinear interpolation in (q, log(amax), log(T)) space
 	in the precomputed array.
 	*/
 
-	// convert amax to microns and take log for interpolation
-	const double la = log(amax*1e4);
+	// take log for interpolation
+	const double la = log(amax);
 	const double lT = log(T);
 
 	// find left indices for interpolation
@@ -257,7 +255,7 @@ int main() {
 }
 
 // Make sure you have the data files in the same directory as this file:
-// q.dat, amax_um.dat, T_K.dat, kR_cm2g.dbl, kP_cm2g.dbl
+// q.dat, amax_cm.dat, T_K.dat, kR_cm2g.dbl, kP_cm2g.dbl
 
 // compile this file (growpacity.c) into an executable called test with:
 // gcc -o test growpacity.c -lm
