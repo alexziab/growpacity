@@ -67,6 +67,6 @@ We underscore that our intent is not to provide a new or more realistic dust opa
 
 # Acknowledgements
 
-AZ and TB acknowledge funding from the European Union under the Horizon Europe Research and Innovation Programme 101124282 (EARLYBIRD). Views and opinions expressed are those of the authors only.
+AZ and TB acknowledge funding from the European Union under the Horizon Europe Research and Innovation Programme 101124282 (EARLYBIRD). TB acknowledges funding by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence Strategy - EXC-2094 - 390783311. Views and opinions expressed are those of the authors only.
 
 # References
