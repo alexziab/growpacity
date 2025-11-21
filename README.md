@@ -1,9 +1,24 @@
 # Growpacity
 `growpacity` is a Python and C toolkit for calculating dust opacities in astrophysical environments. It provides a framework for generating, storing, and interpolating mean opacities (Rosseland and Planck) over customizable grids of grain size distributions, temperature, and powerlaw exponents.
 
-This package is designed as a wrapper around [OpTool](https://github.com/cdominik/optool), allowing users to specify grain composition and obtain temperature-, maximum grain size-, and dust size distribution-dependent mean opacities. The resulting tables are lightweight and optimized for use in radiation hydrodynamics and dust coagulation models, where grain size distributions evolve dynamically.
+This package is designed as a wrapper around [optool](https://github.com/cdominik/optool), allowing users to specify grain composition and obtain temperature-, maximum grain size-, and dust size distribution-dependent mean opacities. The resulting tables are lightweight and optimized for use in radiation hydrodynamics and dust coagulation models, where grain size distributions evolve dynamically.
 
 **Note:** Growpacity does not introduce a new dust opacity model; it provides a computationally efficient framework for tabulating and interpolating opacities based on user-defined choices of grain composition and size distribution. The applicability of the results depends on the user's physical assumptions.
+
+<!-- table of contents with hyperlinks: -->
+- [Installation](#installation)
+     - [1. Downloading the module](#1-downloading-the-module)
+     - [2. Building `optool`](#2-building-optool)
+     - [3. Installing `growpacity`](#3-installing-growpacity)
+- [Core Functionality](#core-functionality)
+- [Typical Workflow](#typical-workflow)
+- [File Outputs](#file-outputs)
+- [Example](#example)
+- [Requirements](#requirements)
+     - [Mandatory](#mandatory)
+     - [Optional but recommended](#optional-but-recommended)
+- [Related Publication](#related-publication)
+- [References](#references)
 
 ### Core Functionality
 
@@ -18,6 +33,8 @@ This package is designed as a wrapper around [OpTool](https://github.com/cdomini
 
 ### Installation
 
+#### 1. Downloading the module
+
 `growpacity` ships with `optool` as a git submodule. To install, clone the repository with submodules:
 
 ```bash
@@ -25,7 +42,15 @@ git clone --recurse-submodules https://github.com/alexziab/growpacity.git
 cd growpacity
 ```
 
-Then install `optool` by following the instructions in the `optool/` directory. Typically, this will look like:
+_note: if you already cloned without submodules, run:_
+```bash
+git submodule init && git submodule update
+```
+to fetch `optool`.
+
+#### 2. Building `optool`
+
+After that, install `optool` by following the instructions in the `optool/` directory. Typically, this will look like:
 
 ```bash
 cd growpacity/optool
@@ -37,6 +62,8 @@ Important: Ensure that the `optool` binary is in your system's PATH for `growpac
 ```bash
 export PATH=$PATH:/path/to/optool
 ```
+
+#### 3. Installing `growpacity`
 
 Finally, install the `growpacity` Python package by navigating to the parent directory and running:
 
@@ -65,7 +92,7 @@ Done correctly, the file structure should look like this:
 ### Typical Workflow
 
 1. **Generate Opacity Tables:**  
-     Instantiate `OpacityCalculator` in Python, set desired ranges, and run `execute_optool()` to generate absorption coefficients using OpTool.
+     Instantiate `OpacityCalculator` in Python, set desired ranges, and run `execute_optool()` to generate absorption coefficients using optool.
 2. **Compute Mean Opacities:**  
      Use `build_mean_opacities()` to calculate Rosseland and Planck means and save them.
 3. **Tabulate Results:**  
@@ -84,11 +111,20 @@ Done correctly, the file structure should look like this:
 
 See `tests/example.ipynb` for a step-by-step demonstration of generating and visualizing opacities.
 
+_note: the example notebook requires `matplotlib` for plotting, and (optionally) `scipy` to compare the `numba` implementation against._
+
 ### Requirements
 
-- Python 3, NumPy, Astropy, Numba
-- [OpTool](https://github.com/cdominik/optool), installed and accessible via terminal
-- GCC (for compiling C code)
+#### Mandatory
+
+- Python `>=3.9`, Numpy, Astropy
+- [optool](https://github.com/cdominik/optool), installed and accessible via terminal (see [installation-2](#2-building-optool))
+
+#### Optional but recommended
+
+- Numba (for JIT acceleration of Python interpolation)
+- Scipy (for interpolation if Numba is not used, e.g. with python >=3.14 as of Nov 2025)
+- GCC (for compiling the C extension)
 
 ### Related Publication
 
@@ -101,5 +137,5 @@ _Alexandros Ziampras, Tilman Birnstiel_
 
 - Sphinx documentation can be found in the `docs/` folder.
 - For additional details, see docstrings/comments in `growpacity/growpacity.py` and `growpacity/growpacity.c`.
-- OpTool: [https://github.com/cdominik/optool](https://github.com/cdominik/optool)
+- optool: [https://github.com/cdominik/optool](https://github.com/cdominik/optool)
 - See publication for further context and usage recommendations.
