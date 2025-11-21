@@ -1,12 +1,24 @@
 import numpy as np
 from astropy import constants as const, units as u
 import os
-try: from numba import njit
+try:
+    from scipy.interpolate import interpn
+    __have_scipy = True
+except ImportError:
+    __have_scipy = False
+try:
+    from numba import njit
+    __have_numba = True
 except ImportError: # numba is optional
-    print("Numba not found. evaluation of mean opacities will be MUCH slower.")
-    def njit(func): return func
+    __have_numba = False
+    if not __have_scipy:
+        print("Numba not found. Evaluation of mean opacities will be slower, unless you have scipy installed.")
+        def njit(func): return func
+    else:
+        print("Numba not found. Falling back to scipy for interpolation of mean opacities.")
 
-def toQuantity(array, unit=None):
+
+def toQuantity(array, unit=u.Unit('')):
     """
     Checks if an array is an astropy Quantity. Converts it to one if not.
 
@@ -28,10 +40,10 @@ def toQuantity(array, unit=None):
     if isinstance(array, u.Quantity): return array.to(unit)
     else: return np.array(array) * u.Unit(unit)
 
-def BBflux(T=5780, wl=None):
+def BBflux(T=5780*u.K, wl=1e-4*u.cm):
     """
     Returns the flux spectrum of a black body at wavelength λ and temperature T.
-    The flux is calculated assuming::
+    The flux is calculated assuming:
 
         f = exp(h*c/(λkT))
         B(λ) = 2hc^2/λ^5 / (f - 1)
@@ -73,8 +85,7 @@ def BBflux(T=5780, wl=None):
     dBdT = dBdT.to('erg/(cm2*s*K *cm)')
 
     return B, dBdT
-    
-                
+
 class OpacityCalculator:
     """
     Master class that handles the opacity calculations.
@@ -122,9 +133,9 @@ class OpacityCalculator:
         {dirc}/{name}_a{amax}_q{q}.dat for mean opacities
     """
 
-    def __init__(self, amin=0.1*u.um,
+    def __init__(self, amin=1e-5*u.cm,
                  q_min=-4.5, q_max=-2.5, Nq=9,
-                 amax_min=0.1*u.um, amax_max=1e4*u.um, Namax=14,
+                 amax_min=1e-5*u.cm, amax_max=1*u.cm, Namax=14,
                  T_min=1*u.K, T_max=3000*u.K, NT=100,
                  optool_args='', dirc='data/', name='', read_in=False):
 
@@ -134,7 +145,7 @@ class OpacityCalculator:
 
         if read_in:
             self.q = np.loadtxt(f'{dirc}/q.dat', skiprows=1)
-            self.amax = np.loadtxt(f'{dirc}/amax_um.dat', skiprows=1) * u.um
+            self.amax = np.loadtxt(f'{dirc}/amax_cm.dat', skiprows=1) * u.cm
             self.T = np.loadtxt(f'{dirc}/T_K.dat', skiprows=1) * u.K
 
             # here we assume that amin is the smallest bin in amax if it is set to None
@@ -143,18 +154,16 @@ class OpacityCalculator:
             if amin is None:
                 self.amin = self.amax[0]
             else:
-                self.amin = toQuantity(amin, u.um)
+                self.amin = toQuantity(amin, u.cm)
 
             self.load_master_arrays()
         else:
-            self.amin = toQuantity(amin, u.um)
+            self.amin = toQuantity(amin, u.cm)
             self.q = np.linspace(q_min, q_max, Nq)
-            self.amax = np.geomspace(toQuantity(amax_min, u.um),
-                                     toQuantity(amax_max, u.um), Namax)
+            self.amax = np.geomspace(toQuantity(amax_min, u.cm),
+                                     toQuantity(amax_max, u.cm), Namax)
             self.T = np.geomspace(toQuantity(T_min, u.K),
                                   toQuantity(T_max, u.K), NT)
-
-
 
     def get_filename(self, amax, q):
         """
@@ -167,29 +176,43 @@ class OpacityCalculator:
         full_name = f"{self.name}{sep}a{amax:.2e}_q{q:.2f}"
         return full_name
 
-    def execute_optool(self, quiet=True, overwrite=False):
+    def execute_optool(self, quiet=False, suppress_dots=True, overwrite=False):
         """
         Repeatedly calls OpTool over the range of amax and q requested.
-        If quiet, suppressed OpTool output. Useful to hide all the dots.
+
+        Arguments
+        ----------
+        quiet : bool, optional [False]
+            If quiet, suppresses all output from this function.
+        suppress_dots : bool, optional [True]
+            If suppress_dots, hides all the dots ("progress bar") in OpTool output.
+        overwrite : bool, optional [False]
+            If overwrite, re-runs optool even if the output file exists.
         """
 
         dirc = self.dirc
         name = self.name
-        amin = self.amin.to_value('um')
+        amin = self.amin.to_value('cm')
 
         if not os.path.exists(dirc): os.makedirs(dirc)
 
-        for amax in self.amax.to_value('um'):
+        for amax in self.amax.to_value('cm'):
             for q in self.q:
                 full_name = self.get_filename(amax, q)
                 filename  = f"{dirc}/dustkappa_{full_name}.inp"
                 if os.path.exists(filename) and not overwrite: continue
 
-                cmd = f'optool -a {amin} {amax} {-q} ' + self.optool_args
+                # optool expects sizes in μm
+                # round to avoid stray cases of '9.999999999e-6' instead of 1e-5'
+                amin_um = round(amin * (1*u.cm).to_value('um'), 16) # cm to um
+                amax_um = round(amax * (1*u.cm).to_value('um'), 16) # cm to um
+                cmd = f'optool -a {amin_um} {amax_um} {-q} ' + self.optool_args
                 cmd += f' -o {dirc} -radmc {full_name}'
-                if quiet: cmd += ' >/dev/null 2>&1' # ignore default output
+                if quiet or suppress_dots:
+                    cmd += ' >/dev/null 2>&1' # ignore optool output
+                # cmd += ' &' # run in background. Dev only, remove for prod
 
-                print(f'Running: {cmd}')
+                if not quiet: print(f'Running: {cmd}')
                 os.system(cmd)
     
     def __compute_mean_opacities(self, filename):
@@ -229,7 +252,7 @@ class OpacityCalculator:
         name = self.name
         T    = self.T.to('K')
 
-        for amax in self.amax.to_value('um'):
+        for amax in self.amax.to_value('cm'):
             for q in self.q:
                 full_name = self.get_filename(amax, q)
                 opac_name = f"{dirc}/kappaRP_{full_name}.dat"
@@ -257,7 +280,7 @@ class OpacityCalculator:
         kP_arr = np.zeros_like(kR_arr)
 
         for q_idx, q in enumerate(self.q):
-            for a_idx, amax in enumerate(self.amax.to_value('um')):
+            for a_idx, amax in enumerate(self.amax.to_value('cm')):
                 full_name = self.get_filename(amax, q)
                 opac_name = f"{dirc}/kappaRP_{full_name}.dat"
 
@@ -285,7 +308,7 @@ class OpacityCalculator:
 
         # these are in ASCII
         write_array(f'{dirc}/q.dat', self.q)
-        write_array(f'{dirc}/amax_um.dat', self.amax.to_value('um'))
+        write_array(f'{dirc}/amax_cm.dat', self.amax.to_value('cm'))
         write_array(f'{dirc}/T_K.dat', self.T.to_value('K'))
 
         # these are binary
@@ -308,25 +331,23 @@ class OpacityCalculator:
         return kR_arr, kP_arr
 
 @njit
-def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
+def __evaluate_mean_opacity_numba(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     """
     Given the arrays of q, amax, T, and kappa(q, amax, T),
     evaluates kappa at the requested values using
     trilinear interpolation.
 
-    Note that amax_arr is expected in μm, and T_arr in K.
-    This is done to match the output of OpacityCalculator.
-    However, amax (the requested value) is expected in cm,
-    and will be converted to μm internally.
+    Note that amax_arr is expected in cm, and T_arr in K, as numpy floats.
 
-    This function is JIT-compiled with numba for speed.
+    This function is (by default) JIT-compiled with numba for speed.
+    If numba is not installed, the function will still work, but slowly.
 
     Arguments
     ----------
     q_arr
         1D array of powerlaw exponents
     amax_arr
-        1D array of maximum grain sizes [um]
+        1D array of maximum grain sizes [cm]
     T_arr
         1D array of temperatures [K]
     kappa_arr
@@ -371,7 +392,7 @@ def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     lamax_arr = np.log10(amax_arr)
     lT_arr    = np.log10(T_arr)
 
-    lamax, lT = np.log10(amax*1e4), np.log10(T)
+    lamax, lT = np.log10(amax), np.log10(T)
 
     qLidx, qRidx = get_edges(q_arr.size,     get_idx(q_arr, q))
     aLidx, aRidx = get_edges(lamax_arr.size, get_idx(lamax_arr, lamax))
@@ -406,9 +427,27 @@ def evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     kappa = 10.0 ** lkappa
     return kappa
 
-def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
+@njit
+def __evaluate_mean_opacities_numba(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_):
     """
-    Wrapper around the numba-jitted function `evaluate_mean_opacity`
+    Internal function that loops over all requested values (as arrays)
+    and calls the (normally) jitted `__evaluate_mean_opacity_numba` function.
+    """
+    shape = (q_.size, amax_.size, T_.size)
+    kappa = np.zeros(shape, dtype=float)
+
+    for k in range(q_.size):
+        for j in range(amax_.size):
+            for i in range(T_.size):
+                kappa[k,j,i] = __evaluate_mean_opacity_numba(q_arr, amax_arr, T_arr, kappa_arr,
+                                                    q_[k], amax_[j], T_[i])
+    return kappa
+
+def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T, use_numba=True):
+    """
+    Wrapper around either:
+        the numba-jitted function `__evaluate_mean_opacity_numba`
+        or the scipy-based function `__evaluate_mean_opacities_scipy`,
     to allow for array-like inputs for q, amax, and T.
 
     Arguments
@@ -416,7 +455,7 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     q_arr : 1D array
         1D array of powerlaw exponents
     amax_arr : 1D array
-        1D array of maximum grain sizes [um]
+        1D array of maximum grain sizes [cm]
     T_arr : 1D array
         1D array of temperatures [K]
     kappa_arr : 3D array
@@ -428,6 +467,14 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     T : float or array-like
         requested temperature [K]
 
+    use_numba : bool, optional [True]
+        Whether to use the numba-jitted function for evaluation.
+        If False, uses the scipy-based function.
+        The scipy function is used automatically if numba is not installed,
+        and might be faster for very large arrays.
+        If both numba and scipy are not installed, the function falls back
+        to a non-jitted version of the numba function. This will be slow.
+
     Returns
     -------
     kappa
@@ -437,22 +484,47 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     q_ = np.atleast_1d(q)
     amax_ = np.atleast_1d(amax)
     T_ = np.atleast_1d(T)
-    kappa = __evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_)
+
+    args = (q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_)
+    use_scipy = __have_scipy and (not __have_numba or (not use_numba))
+    if use_scipy: kappa = __evaluate_mean_opacities_scipy(*args)
+    else:         kappa = __evaluate_mean_opacities_numba(*args)
     if kappa.size == 1: return kappa[0,0,0]
     return kappa
 
-@njit
-def __evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_):
+def __evaluate_mean_opacities_scipy(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T):
     """
-    Internal function that loops over all requested values (as arrays)
-    and calls the jitted `evaluate_mean_opacity` function.
-    """
-    shape = (q_.size, amax_.size, T_.size)
-    kappa = np.zeros(shape, dtype=float)
+    Given the arrays of q, amax, T, and kappa(q, amax, T),
+    evaluates kappa at the requested values using
+    scipy's interpn function.
 
-    for k in range(q_.size):
-        for j in range(amax_.size):
-            for i in range(T_.size):
-                kappa[k,j,i] = evaluate_mean_opacity(q_arr, amax_arr, T_arr, kappa_arr,
-                                                    q_[k], amax_[j], T_[i])
+    Note that amax_arr is expected in cm, and T_arr in K.
+
+    Arguments
+    ----------
+    q_arr
+        1D array of powerlaw exponents
+    amax_arr
+        1D array of maximum grain sizes [cm]
+    T_arr
+        1D array of temperatures [K]
+    kappa_arr
+        3D array of opacities [cm^2/g]
+    q
+        requested powerlaw exponent
+    amax
+        requested maximum grain size [cm]
+    T
+        requested temperature [K]
+
+    Returns
+    -------
+    kappa
+        the interpolated opacity [cm^2/g]
+    """
+    x, y, z = np.meshgrid(q, np.log10(amax), np.log10(T), indexing='ij')
+    points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
+    kappa = 10 ** interpn(
+        (q_arr, np.log10(amax_arr), np.log10(T_arr)),
+        np.log10(kappa_arr), points, bounds_error=False, fill_value=np.nan).reshape(x.shape)
     return kappa
