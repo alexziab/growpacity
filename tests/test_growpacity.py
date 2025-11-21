@@ -6,10 +6,8 @@ import numpy as np
 import growpacity as op
 import astropy.units as u
 import astropy.constants as const
-from scipy.interpolate import interpn
 from pathlib import Path
 from importlib.resources import files
-
 
 @pytest.fixture(scope="module")
 def opacity_data():
@@ -24,51 +22,68 @@ def opacity_data():
     OC.compute_and_store_master_arrays(overwrite=True)
     kR_arr, kP_arr = OC.load_master_arrays()
     q    = OC.q
-    amax = OC.amax.to_value('um')
+    amax = OC.amax.to_value('cm')
     T    = OC.T.to_value('K')
     arrs = (q, amax, T)
     return arrs, kR_arr, kP_arr
 
-
 def test_rosseland_opacity(opacity_data):
+    from scipy.interpolate import interpn
     arrs, kR_arr, kP_arr = opacity_data
-    qtest, atest, Ttest = -2.65, 0.5, 120
+    qtest, atest, Ttest = -2.65, 5e-5, 120 # 0.5 um in cm
 
-    ev1 = op.evaluate_mean_opacity(*arrs, kR_arr, qtest, atest/1e4, Ttest)
+    ev1 = op.evaluate_mean_opacities(*arrs, kR_arr, qtest, atest, Ttest)
     ev2 = 10 ** interpn(
         (arrs[0], np.log10(arrs[1]), np.log10(arrs[2])),
-        np.log10(kR_arr),
-        [(qtest, np.log10(atest), np.log10(Ttest))],
+        np.log10(kR_arr), [(qtest, np.log10(atest), np.log10(Ttest))],
         bounds_error=True)[0]
     assert np.isclose(ev1, ev2, rtol=1e-6)
 
 
 def test_planck_opacity(opacity_data):
+    from scipy.interpolate import interpn
     arrs, kR_arr, kP_arr = opacity_data
-    qtest, atest, Ttest = -2.65, 0.5, 120
+    qtest, atest, Ttest = -2.65, 5e-5, 120 # 0.5 um in cm
 
-    ev1 = op.evaluate_mean_opacity(*arrs, kP_arr, qtest, atest/1e4, Ttest)
+    ev1 = op.evaluate_mean_opacities(*arrs, kP_arr, qtest, atest, Ttest)
     ev2 = 10 ** interpn(
         (arrs[0], np.log10(arrs[1]), np.log10(arrs[2])),
-        np.log10(kP_arr),
-        [(qtest, np.log10(atest), np.log10(Ttest))],
+        np.log10(kP_arr), [(qtest, np.log10(atest), np.log10(Ttest))],
         bounds_error=True)[0]
     assert np.isclose(ev1, ev2, rtol=1e-6)
 
 def test_rosseland_opacities(opacity_data):
+    from scipy.interpolate import interpn
     arrs, kR_arr, kP_arr = opacity_data
-    qtest, atest, Ttest = np.array([-2.65, -3.1]), 0.5, np.array([120, 150, 2000])
+    qtest, atest, Ttest = np.array([-2.65, -3.1]), 5e-5, np.array([120, 150, 2000])
 
-    ev1 = op.evaluate_mean_opacities(*arrs, kR_arr, qtest, atest/1e4, Ttest)
+    ev1 = op.evaluate_mean_opacities(*arrs, kR_arr, qtest, atest, Ttest)
 
     x, y, z = np.meshgrid(qtest, np.log10(atest), np.log10(Ttest), indexing='ij')
     points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
-    ev2 = 10 ** interpn(
-        (arrs[0], np.log10(arrs[1]), np.log10(arrs[2])),
-        np.log10(kR_arr),
-        points,
-        bounds_error=True).reshape(x.shape)
+    ev2 = 10 ** interpn((arrs[0], np.log10(arrs[1]), np.log10(arrs[2])),
+        np.log10(kR_arr), points, bounds_error=True).reshape(x.shape)
     assert np.allclose(ev1, ev2, rtol=1e-6)
+
+def test_planck_opacities_scipy(opacity_data):
+    from scipy.interpolate import interpn
+    arrs, kR_arr, kP_arr = opacity_data
+    qtest, atest, Ttest = np.array([-2.65, -3.1]), 5e-5, np.array([120, 150, 2000])
+
+    ev1 = op.evaluate_mean_opacities(*arrs, kP_arr, qtest, atest, Ttest, use_scipy=True)
+
+    x, y, z = np.meshgrid(qtest, np.log10(atest), np.log10(Ttest), indexing='ij')
+    points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
+    ev2 = 10 ** interpn((arrs[0], np.log10(arrs[1]), np.log10(arrs[2])),
+        np.log10(kP_arr), points, bounds_error=True).reshape(x.shape)
+    assert np.allclose(ev1, ev2, rtol=1e-6)
+
+def test_planck_opacities_scipy_out_of_bounds(opacity_data):
+    arrs, kR_arr, kP_arr = opacity_data
+    qtest, atest, Ttest = np.array([-2.65]), 5e-5, np.array([1, 200000])
+
+    ev = op.evaluate_mean_opacities(*arrs, kP_arr, qtest, atest, Ttest, use_scipy=True)
+    assert ~np.isnan(ev[0,0,0]), np.isnan(ev[0,0,1])
 
 def test_black_body_flux():
     T = 1000 * u.K
@@ -86,9 +101,8 @@ def test_black_body_flux():
 
 def test_toQuantity():
     arr = np.array([1, 10, 100])
-    qarr = op.toQuantity(arr, u.um)
-    assert np.all(qarr == arr * u.um)
-
+    qarr = op.toQuantity(arr, u.cm)
+    assert np.all(qarr == arr * u.cm)
 
 @pytest.fixture(scope="module")
 def tmp_opacity_dir(tmp_path_factory):
@@ -105,7 +119,6 @@ def tmp_opacity_dir(tmp_path_factory):
 
     yield str(d / 'default-data')
     # no cleanup needed, pytest handles tmp_path
-
 
 def _safe_extract_zip(zip_path, extract_dir: Path):
     """
@@ -125,7 +138,6 @@ def _safe_extract_zip(zip_path, extract_dir: Path):
                 with zf.open(info) as src_f, open(member_path, "wb") as dst_f:
                     shutil.copyfileobj(src_f, dst_f)
 
-
 def test_C(tmp_opacity_dir, opacity_data):
 
     # read in the data using the C library
@@ -140,21 +152,20 @@ def test_C(tmp_opacity_dir, opacity_data):
     OC = op.OpacityCalculator(dirc=tmp_opacity_dir, read_in=True)
     kR_arr, kP_arr = OC.load_master_arrays()
     q = OC.q
-    amax = OC.amax.to_value('um')
+    amax = OC.amax.to_value('cm')
     T = OC.T.to_value('K')
     arrs = (q, amax, T)
 
-    qtest, atest, Ttest = -2.65, 0.5, 120
-
+    qtest, atest, Ttest = -2.65, 5e-5, 120
     # call the python function
-    ev1 = op.evaluate_mean_opacity(*arrs, kR_arr, qtest, atest/1e4, Ttest)
+    ev1 = op.evaluate_mean_opacities(*arrs, kR_arr, qtest, atest, Ttest)
 
     # call the C function
-    ev2 = op.growpacity_c.rosseland_opacity(qtest, atest/1e4, Ttest)
+    ev2 = op.growpacity_c.rosseland_opacity(qtest, atest, Ttest)
 
     assert np.allclose(ev1, ev2, rtol=1e-6)
 
-def test_C_read_in(tmp_opacity_dir, opacity_data):
+def test_C_read_amin(tmp_opacity_dir, opacity_data):
 
     # read in the data using the C library
     oldcwd = os.getcwd()
@@ -166,4 +177,4 @@ def test_C_read_in(tmp_opacity_dir, opacity_data):
 
     # read in the data using python: test that amin evaluates to the smallest amax
     OC = op.OpacityCalculator(dirc=tmp_opacity_dir, amin=None, read_in=True)
-    assert np.isclose(OC.amax.min().to_value('um'), 0.1) # for this test
+    assert np.isclose(OC.amax.min(), 0.1*u.um) # for this test
