@@ -29,7 +29,7 @@ def opacity_data():
     return arrs, kR_arr, kP_arr
 
 
-def dont_test_rosseland_opacity(opacity_data):
+def test_rosseland_opacity(opacity_data):
     arrs, kR_arr, kP_arr = opacity_data
     qtest, atest, Ttest = -2.65, 5e-5, 120 # 0.5 um in cm
 
@@ -41,7 +41,7 @@ def dont_test_rosseland_opacity(opacity_data):
     assert np.isclose(ev1, ev2, rtol=1e-6)
 
 
-def dont_test_planck_opacity(opacity_data):
+def test_planck_opacity(opacity_data):
     arrs, kR_arr, kP_arr = opacity_data
     qtest, atest, Ttest = -2.65, 5e-5, 120 # 0.5 um in cm
 
@@ -52,7 +52,7 @@ def dont_test_planck_opacity(opacity_data):
         bounds_error=True)[0]
     assert np.isclose(ev1, ev2, rtol=1e-6)
 
-def dont_test_rosseland_opacities(opacity_data):
+def test_rosseland_opacities(opacity_data):
     arrs, kR_arr, kP_arr = opacity_data
     qtest, atest, Ttest = np.array([-2.65, -3.1]), 5e-5, np.array([120, 150, 2000])
 
