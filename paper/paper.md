@@ -63,7 +63,7 @@ The code and documentation are available at
 
 # Limitations and extensions
 
-We underscore that our intent is not to provide a new or more realistic dust opacity model, but rather one suitable for use in coagulation models, where dust densities and distributions can vary as a function of position and time---the applicability of the model depends on entirely user-defined choices. The method can be easily extended to include gas opacities [e.g., @MarigoEtal:2024; @MalyginEtal:2014; @SemenovEtal:2003] and prescriptions for the sublimation of dust species [e.g., @IsellaNatta:2005], for a more complete opacity model in regimes where gas opacities are significant.
+We underscore that our intent is not to provide a new or more realistic dust opacity model, but rather one suitable for use in coagulation models, where dust densities and distributions can vary as a function of position and time---the applicability of the model depends on entirely user-defined choices. The method can be easily extended to include gas opacities [@MarigoEtal:2024; e.g., @MalyginEtal:2014; @SemenovEtal:2003] and prescriptions for the sublimation of dust species [e.g., @IsellaNatta:2005], for a more complete opacity model in regimes where gas opacities are significant.
 
 # Acknowledgements
 
