@@ -4,12 +4,12 @@ import os
 try:
     from scipy.interpolate import interpn
     have_scipy = True
-except ModuleNotFoundError:
+except ModuleNotFoundError: # pragma: no cover
     have_scipy = False
 try:
     from numba import njit
     have_numba = True
-except ModuleNotFoundError: # numba is optional
+except ModuleNotFoundError: # pragma: no cover # numba is optional
     have_numba = False
     def njit(func): return func
     if not have_scipy:
@@ -20,7 +20,7 @@ except ModuleNotFoundError: # numba is optional
 
 def read_optool_file(filename):
     """
-    Rreads an optool output file and returns
+    Reads an optool output file and returns
     the wavelength, absorption, scattering, and asymmetry coefficients.
     """
 
@@ -39,17 +39,18 @@ def read_optool_file(filename):
 
     return wl, kabs, ksca, g
 
-
-def compute_mean_opacities(T, filename) :
+def compute_mean_opacities(T, filename):
     """
     Computes Rosseland and Planck means
     from a given file with absorption coefficients.
+
     Arguments
     ----------
     T : array-like or astropy.units.Quantity [K]
         array of temperatures at which to compute the means.
     filename : str
         path to the file with absorption coefficients.
+
     Returns
     -------
     kR : astropy.units.Quantity [cm^2/g]
@@ -94,7 +95,7 @@ def toQuantity(array, unit=u.Unit('')):
 def BBflux(T=5780*u.K, wl=1e-4*u.cm):
     """
     Returns the flux spectrum of a black body at wavelength λ and temperature T.
-    The flux is calculated assuming:
+    The flux is calculated assuming::
 
         f = exp(h*c/(λkT))
         B(λ) = 2hc^2/λ^5 / (f - 1)
@@ -102,10 +103,10 @@ def BBflux(T=5780*u.K, wl=1e-4*u.cm):
 
     Arguments
     ----------
-    T : array-like or astropy.units.Quantity
-        the temperature of the black body. Defaults to K.
-    wl : array-like or astropy.units.Quantity
-        the wavelengths to sample on. Defaults to cm.
+    T : array-like [K] or astropy.units.Quantity
+        the temperature of the black body.
+    wl : array-like [cm] or astropy.units.Quantity
+        the wavelengths to sample on.
     
     Returns
     -------
@@ -473,7 +474,7 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr,
                             q, amax, T, use_scipy=False):
     """
     Wrapper around either:
-        the numba-jitted function `__evaluate_mean_opacity_numba`
+        the (normally) numba-jitted function `__evaluate_mean_opacity_numba`
         or the scipy-based function `__evaluate_mean_opacities_scipy`,
     to allow for array-like inputs for q, amax, and T.
 
@@ -489,10 +490,10 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr,
         3D array of opacities [cm^2/g]
     q : float or array-like
         requested powerlaw exponent
-    amax : float or array-like
-        requested maximum grain size [cm]
-    T : float or array-like
-        requested temperature [K]
+    amax : float or array-like [cm] or astropy.units.Quantity
+        requested maximum grain size
+    T : float or array-like [K] or astropy.units.Quantity
+        requested temperature
 
     use_scipy : bool, optional [False]
         Whether to use the scipy-based function for evaluation.
@@ -509,8 +510,8 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr,
     """
 
     q_ = np.atleast_1d(q)
-    amax_ = np.atleast_1d(amax)
-    T_ = np.atleast_1d(T)
+    amax_ = toQuantity(np.atleast_1d(amax), u.cm).to_value('cm')
+    T_ = toQuantity(np.atleast_1d(T), u.K).to_value('K')
 
     args = (q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_)
     use_sp = have_scipy and use_scipy

@@ -1,5 +1,6 @@
 *.o
-*.inp
+test-data/*.inp
+tests/*data*/*.inp
 *.dat
 *.dbl
 __pycache__

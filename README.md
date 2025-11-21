@@ -42,11 +42,20 @@ git clone --recurse-submodules https://github.com/alexziab/growpacity.git
 cd growpacity
 ```
 
-_note: if you already cloned without submodules, run:_
+If you already have `optool` installed system-wide, you can skip the submodule step and just clone normally:
+
 ```bash
+git clone https://github.com/alexziab/growpacity.git
+cd growpacity
+```
+
+You can then skip to step 3.
+
+_note: if you already cloned without submodules but want to fetch `optool`, run:_
+```bash
+cd growpacity
 git submodule init && git submodule update
 ```
-to fetch `optool`.
 
 #### 2. Building `optool`
 
@@ -104,14 +113,14 @@ Done correctly, the file structure should look like this:
 
 - Absorption coefficients ($\kappa_\text{abs}$, $\kappa_\text{sca}$, $g$)
 - Mean opacities ($\kappa_\text{R}$, $\kappa_\text{P}$) for each parameter combination
-- `q.dat`, `amax_um.dat`, `T_K.dat` — Grid definitions
+- `q.dat`, `amax_cm.dat`, `T_K.dat` — Grid definitions
 - `kR_cm2g.dbl`, `kP_cm2g.dbl` — Opacity arrays (binary)
 
 ### Example
 
 See `tests/example.ipynb` for a step-by-step demonstration of generating and visualizing opacities.
 
-_note: the example notebook requires `matplotlib` for plotting, and (optionally) `scipy` to compare the `numba` implementation against._
+_note: the example notebook requires `matplotlib` for plotting._
 
 ### Requirements
 
@@ -123,7 +132,7 @@ _note: the example notebook requires `matplotlib` for plotting, and (optionally)
 #### Optional but recommended
 
 - Numba (for JIT acceleration of Python interpolation)
-- Scipy (for interpolation if Numba is not used, e.g. with python >=3.14 as of Nov 2025)
+- Scipy (for interpolation if Numba is not used, e.g. with python `>=3.14` as of Nov 2025)
 - GCC (for compiling the C extension)
 
 ### Related Publication

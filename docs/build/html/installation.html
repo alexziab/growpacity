@@ -47,7 +47,9 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optional-dependencies">Optional dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id1">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-optool">Installing <code class="docutils literal notranslate"><span class="pre">optool</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -84,22 +86,47 @@
 <section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
 <ul class="simple">
-<li><p>Python 3.10 or later</p></li>
+<li><p>Python 3.9 or later</p></li>
 <li><p>NumPy</p></li>
 <li><p>Astropy</p></li>
-<li><p>Numba</p></li>
-<li><p>SciPy</p></li>
-<li><p><a class="reference external" href="https://github.com/cdominik/OpTool">OpTool</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">optool</span></code> (<a class="reference external" href="https://github.com/cdominik/OpTool">Github</a>)</p></li>
+</ul>
+</section>
+<section id="optional-dependencies">
+<h2>Optional dependencies<a class="headerlink" href="#optional-dependencies" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Numba (for fast interpolation)</p></li>
+<li><p>SciPy (as an alternative for interpolation)</p></li>
+<li><p>C compiler (for building the C extension)</p></li>
 </ul>
 </section>
 <section id="id1">
 <h2>Installation<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
-<p>You can install the package via GitHub:</p>
+<p>You can install the package via GitHub. If you already have <code class="docutils literal notranslate"><span class="pre">optool</span></code> installed system-wide, you can just clone normally:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/alexziab/growpacity.git
 <span class="nb">cd</span><span class="w"> </span>growpacity
 pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
+<p>Otherwise, clone with submodules to include <cite>optool</cite>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>https://github.com/alexziab/growpacity.git
+<span class="nb">cd</span><span class="w"> </span>growpacity
+pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+<p>If you already cloned without submodules but want to fetch <cite>optool</cite>, run the following command from within the <cite>growpacity</cite> directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>init<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>git<span class="w"> </span>submodule<span class="w"> </span>update
+</pre></div>
+</div>
+</section>
+<section id="installing-optool">
+<h2>Installing <code class="docutils literal notranslate"><span class="pre">optool</span></code><a class="headerlink" href="#installing-optool" title="Permalink to this heading"></a></h2>
+<p>To install <code class="docutils literal notranslate"><span class="pre">optool</span></code>, navigate to the <code class="docutils literal notranslate"><span class="pre">optool</span></code> subdirectory and follow the build instructions in its README. Typically, this involves running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>growpacity/optool
+make<span class="w"> </span><span class="nv">multi</span><span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+<p>This will build the executable, which must be accessible to the <code class="docutils literal notranslate"><span class="pre">growpacity</span></code> package. This can be done by adding the <code class="docutils literal notranslate"><span class="pre">optool</span></code> directory to your system’s <code class="docutils literal notranslate"><span class="pre">PATH</span></code> environment variable, or by copying the executable to a directory that is already in your <code class="docutils literal notranslate"><span class="pre">PATH</span></code>.</p>
 </section>
 </section>
 

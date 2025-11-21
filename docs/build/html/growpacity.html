@@ -52,8 +52,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-growpacity.growpacity">growpacity.growpacity module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.BBflux"><code class="docutils literal notranslate"><span class="pre">BBflux()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.OpacityCalculator"><code class="docutils literal notranslate"><span class="pre">OpacityCalculator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.compute_mean_opacities"><code class="docutils literal notranslate"><span class="pre">compute_mean_opacities()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.evaluate_mean_opacities"><code class="docutils literal notranslate"><span class="pre">evaluate_mean_opacities()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.evaluate_mean_opacity"><code class="docutils literal notranslate"><span class="pre">evaluate_mean_opacity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.read_optool_file"><code class="docutils literal notranslate"><span class="pre">read_optool_file()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#growpacity.growpacity.toQuantity"><code class="docutils literal notranslate"><span class="pre">toQuantity()</span></code></a></li>
 </ul>
 </li>
@@ -98,7 +99,7 @@
 <span id="growpacity-growpacity-module"></span><h2>growpacity.growpacity module<a class="headerlink" href="#module-growpacity.growpacity" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="growpacity.growpacity.BBflux">
-<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">BBflux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5780</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.BBflux" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">BBflux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T=&lt;Quantity</span> <span class="pre">5780.</span> <span class="pre">K&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wl=&lt;Quantity</span> <span class="pre">0.0001</span> <span class="pre">cm&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.BBflux" title="Permalink to this definition"></a></dt>
 <dd><p>Returns the flux spectrum of a black body at wavelength λ and temperature T.
 The flux is calculated assuming:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="n">h</span><span class="o">*</span><span class="n">c</span><span class="o">/</span><span class="p">(</span><span class="n">λkT</span><span class="p">))</span>
@@ -109,9 +110,9 @@ The flux is calculated assuming:</p>
 <section id="arguments">
 <h3>Arguments<a class="headerlink" href="#arguments" title="Permalink to this heading"></a></h3>
 <dl class="simple">
-<dt>T<span class="classifier">array-like or astropy.units.Quantity</span></dt><dd><p>the temperature of the black body. Defaults to K.</p>
+<dt>T<span class="classifier">array-like [K] or astropy.units.Quantity</span></dt><dd><p>the temperature of the black body.</p>
 </dd>
-<dt>wl<span class="classifier">array-like or astropy.units.Quantity</span></dt><dd><p>the wavelengths to sample on. Defaults to cm.</p>
+<dt>wl<span class="classifier">array-like [cm] or astropy.units.Quantity</span></dt><dd><p>the wavelengths to sample on.</p>
 </dd>
 </dl>
 </section>
@@ -128,7 +129,7 @@ The flux is calculated assuming:</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="growpacity.growpacity.OpacityCalculator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">OpacityCalculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amin=&lt;Quantity</span> <span class="pre">0.1</span> <span class="pre">um&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_min=-4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_max=-2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nq=9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_min=&lt;Quantity</span> <span class="pre">0.1</span> <span class="pre">um&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_max=&lt;Quantity</span> <span class="pre">10000.</span> <span class="pre">um&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Namax=14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_min=&lt;Quantity</span> <span class="pre">1.</span> <span class="pre">K&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_max=&lt;Quantity</span> <span class="pre">3000.</span> <span class="pre">K&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">NT=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optool_args=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirc='data/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name=''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.OpacityCalculator" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">OpacityCalculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amin=&lt;Quantity</span> <span class="pre">1.e-05</span> <span class="pre">cm&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_min=-4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_max=-2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nq=9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_min=&lt;Quantity</span> <span class="pre">1.e-05</span> <span class="pre">cm&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_max=&lt;Quantity</span> <span class="pre">1.</span> <span class="pre">cm&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Namax=14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_min=&lt;Quantity</span> <span class="pre">1.</span> <span class="pre">K&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_max=&lt;Quantity</span> <span class="pre">3000.</span> <span class="pre">K&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">NT=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optool_args=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirc='data/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_in=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.OpacityCalculator" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Master class that handles the opacity calculations.
 This is the meat of the code: basically call OpTool repeatedly 
@@ -197,9 +198,19 @@ of κ(q, amax, T).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="growpacity.growpacity.OpacityCalculator.execute_optool">
-<span class="sig-name descname"><span class="pre">execute_optool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quiet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.OpacityCalculator.execute_optool" title="Permalink to this definition"></a></dt>
-<dd><p>Repeatedly calls OpTool over the range of amax and q requested.
-If quiet, suppressed OpTool output. Useful to hide all the dots.</p>
+<span class="sig-name descname"><span class="pre">execute_optool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quiet</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suppress_dots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.OpacityCalculator.execute_optool" title="Permalink to this definition"></a></dt>
+<dd><p>Repeatedly calls OpTool over the range of amax and q requested.</p>
+<section id="id2">
+<h4>Arguments<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>quiet<span class="classifier">bool, optional [False]</span></dt><dd><p>If quiet, suppresses all output from this function.</p>
+</dd>
+<dt>suppress_dots<span class="classifier">bool, optional [True]</span></dt><dd><p>If suppress_dots, hides all the dots (“progress bar”) in OpTool output.</p>
+</dd>
+<dt>overwrite<span class="classifier">bool, optional [False]</span></dt><dd><p>If overwrite, re-runs optool even if the output file exists.</p>
+</dd>
+</dl>
+</section>
 </dd></dl>
 
 <dl class="py method">
@@ -220,16 +231,45 @@ for a given amax and q.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="growpacity.growpacity.compute_mean_opacities">
+<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">compute_mean_opacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.compute_mean_opacities" title="Permalink to this definition"></a></dt>
+<dd><p>Computes Rosseland and Planck means
+from a given file with absorption coefficients.</p>
+<section id="id3">
+<h3>Arguments<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>T<span class="classifier">array-like or astropy.units.Quantity [K]</span></dt><dd><p>array of temperatures at which to compute the means.</p>
+</dd>
+<dt>filename<span class="classifier">str</span></dt><dd><p>path to the file with absorption coefficients.</p>
+</dd>
+</dl>
+</section>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>kR<span class="classifier">astropy.units.Quantity [cm^2/g]</span></dt><dd><p>Rosseland mean opacities at the requested temperatures.</p>
+</dd>
+<dt>kP<span class="classifier">astropy.units.Quantity [cm^2/g]</span></dt><dd><p>Planck mean opacities at the requested temperatures.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="growpacity.growpacity.evaluate_mean_opacities">
-<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">evaluate_mean_opacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kappa_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.evaluate_mean_opacities" title="Permalink to this definition"></a></dt>
-<dd><p>Wrapper around the numba-jitted function <cite>evaluate_mean_opacity</cite>
-to allow for array-like inputs for q, amax, and T.</p>
-<section id="id2">
-<h3>Arguments<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
+<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">evaluate_mean_opacities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kappa_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_scipy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.evaluate_mean_opacities" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Wrapper around either:</dt><dd><p>the (normally) numba-jitted function <cite>__evaluate_mean_opacity_numba</cite>
+or the scipy-based function <cite>__evaluate_mean_opacities_scipy</cite>,</p>
+</dd>
+</dl>
+<p>to allow for array-like inputs for q, amax, and T.</p>
+<section id="id5">
+<h3>Arguments<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h3>
 <dl class="simple">
 <dt>q_arr<span class="classifier">1D array</span></dt><dd><p>1D array of powerlaw exponents</p>
 </dd>
-<dt>amax_arr<span class="classifier">1D array</span></dt><dd><p>1D array of maximum grain sizes [um]</p>
+<dt>amax_arr<span class="classifier">1D array</span></dt><dd><p>1D array of maximum grain sizes [cm]</p>
 </dd>
 <dt>T_arr<span class="classifier">1D array</span></dt><dd><p>1D array of temperatures [K]</p>
 </dd>
@@ -237,14 +277,21 @@ to allow for array-like inputs for q, amax, and T.</p>
 </dd>
 <dt>q<span class="classifier">float or array-like</span></dt><dd><p>requested powerlaw exponent</p>
 </dd>
-<dt>amax<span class="classifier">float or array-like</span></dt><dd><p>requested maximum grain size [cm]</p>
+<dt>amax<span class="classifier">float or array-like [cm] or astropy.units.Quantity</span></dt><dd><p>requested maximum grain size</p>
 </dd>
-<dt>T<span class="classifier">float or array-like</span></dt><dd><p>requested temperature [K]</p>
+<dt>T<span class="classifier">float or array-like [K] or astropy.units.Quantity</span></dt><dd><p>requested temperature</p>
+</dd>
+<dt>use_scipy<span class="classifier">bool, optional [False]</span></dt><dd><p>Whether to use the scipy-based function for evaluation.
+If False (default), uses the numba-jitted function.
+The scipy function is used automatically if numba is not installed,
+and might be faster for very large arrays.
+If both numba and scipy are not installed, the function falls back
+to a non-jitted version of the numba function. This will be slow.</p>
 </dd>
 </dl>
 </section>
-<section id="id3">
-<h3>Returns<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h3>
+<section id="id6">
+<h3>Returns<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h3>
 <dl class="simple">
 <dt>kappa</dt><dd><p>the interpolated opacity [cm^2/g]</p>
 </dd>
@@ -253,52 +300,20 @@ to allow for array-like inputs for q, amax, and T.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="growpacity.growpacity.evaluate_mean_opacity">
-<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">evaluate_mean_opacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kappa_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.evaluate_mean_opacity" title="Permalink to this definition"></a></dt>
-<dd><p>Given the arrays of q, amax, T, and kappa(q, amax, T),
-evaluates kappa at the requested values using
-trilinear interpolation.</p>
-<p>Note that amax_arr is expected in μm, and T_arr in K.
-This is done to match the output of OpacityCalculator.
-However, amax (the requested value) is expected in cm,
-and will be converted to μm internally.</p>
-<p>This function is JIT-compiled with numba for speed.</p>
-<section id="id4">
-<h3>Arguments<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h3>
-<dl class="simple">
-<dt>q_arr</dt><dd><p>1D array of powerlaw exponents</p>
-</dd>
-<dt>amax_arr</dt><dd><p>1D array of maximum grain sizes [um]</p>
-</dd>
-<dt>T_arr</dt><dd><p>1D array of temperatures [K]</p>
-</dd>
-<dt>kappa_arr</dt><dd><p>3D array of opacities [cm^2/g]</p>
-</dd>
-<dt>q</dt><dd><p>requested powerlaw exponent</p>
-</dd>
-<dt>amax</dt><dd><p>requested maximum grain size [cm]</p>
-</dd>
-<dt>T</dt><dd><p>requested temperature [K]</p>
-</dd>
-</dl>
-</section>
-<section id="id5">
-<h3>Returns<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h3>
-<dl class="simple">
-<dt>kappa</dt><dd><p>the interpolated opacity [cm^2/g]</p>
-</dd>
-</dl>
-</section>
+<dt class="sig sig-object py" id="growpacity.growpacity.read_optool_file">
+<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">read_optool_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.read_optool_file" title="Permalink to this definition"></a></dt>
+<dd><p>Reads an optool output file and returns
+the wavelength, absorption, scattering, and asymmetry coefficients.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="growpacity.growpacity.toQuantity">
-<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">toQuantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.toQuantity" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">growpacity.growpacity.</span></span><span class="sig-name descname"><span class="pre">toQuantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Unit(dimensionless)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#growpacity.growpacity.toQuantity" title="Permalink to this definition"></a></dt>
 <dd><p>Checks if an array is an astropy Quantity. Converts it to one if not.</p>
 <p>In that case, <cite>unit</cite> must be provided in the form of either plain text
 (compatible with astropy.units.Unit), or as an astropy.units.Unit.</p>
-<section id="id6">
-<h3>Arguments<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h3>
+<section id="id7">
+<h3>Arguments<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h3>
 <dl class="simple">
 <dt>array<span class="classifier">array-like or astropy.units.Quantity</span></dt><dd><p>Input array or quantity.</p>
 </dd>
@@ -306,8 +321,8 @@ and will be converted to μm internally.</p>
 </dd>
 </dl>
 </section>
-<section id="id7">
-<h3>Returns<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h3>
+<section id="id8">
+<h3>Returns<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h3>
 <dl class="simple">
 <dt>astropy.units.Quantity</dt><dd><p>The input array as a Quantity.</p>
 </dd>
