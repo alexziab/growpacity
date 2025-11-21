@@ -13,7 +13,7 @@ except ModuleNotFoundError: # numba is optional
     have_numba = False
     def njit(func): return func
     if not have_scipy:
-        print("Numba not found. Evaluation of mean opacities will be slower, unless you have scipy installed.")
+        print("Numba/Scipy not found. Evaluation of mean opacities will be quite slow.")
     else:
         print("Numba not found. Falling back to scipy for interpolation of mean opacities.")
 
