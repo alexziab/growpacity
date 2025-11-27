@@ -9,6 +9,7 @@ executable(
   'growpacity_cli',           # command line name
   'growpacity.c',             # needs to have the main function inside
   include_directories: inc_np,
+  link_args: ['-lm'],
   install: true,
 )
 
