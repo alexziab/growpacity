@@ -1,7 +1,7 @@
 Installation
 ============
 
-This page explains how to install the **growpacity** package.
+This page covers how to install the **growpacity** package.
 
 Requirements
 ------------
