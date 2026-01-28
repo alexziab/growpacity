@@ -454,15 +454,16 @@ def __evaluate_mean_opacity_numba(q_arr, amax_arr, T_arr, kappa_arr, q, amax, T)
     return kappa
 
 @njit
-def __evaluate_mean_opacities_numba(q_arr, amax_arr, T_arr, kappa_arr,
-                                    q_, amax_, T_):
+def __evaluate_mean_opacities_numba_mesh(q_arr, amax_arr, T_arr, kappa_arr,
+                                    q_, amax_, T_, mesh):
     """
     Internal function that loops over all requested values (as arrays)
     and calls the (normally) jitted `__evaluate_mean_opacity_numba` function.
     """
+
+
     shape = (q_.size, amax_.size, T_.size)
     kappa = np.zeros(shape, dtype=float)
-
     for k in range(q_.size):
         for j in range(amax_.size):
             for i in range(T_.size):
@@ -470,8 +471,23 @@ def __evaluate_mean_opacities_numba(q_arr, amax_arr, T_arr, kappa_arr,
                                                     q_[k], amax_[j], T_[i])
     return kappa
 
+@njit
+def __evaluate_mean_opacities_numba_no_mesh(q_arr, amax_arr, T_arr, kappa_arr,
+                                    q_, amax_, T_):
+    """
+    Internal function that loops over all requested values (as arrays)
+    and calls the (normally) jitted `__evaluate_mean_opacity_numba` function.
+    """
+
+    kappa = np.zeros(q_.size, dtype=float)
+    for idx in range(q_.size):
+        kappa[idx] = __evaluate_mean_opacity_numba(q_arr, amax_arr, T_arr, kappa_arr,
+                                                q_[idx], amax_[idx], T_[idx])
+    return kappa
+
+
 def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr,
-                            q, amax, T, use_scipy=False):
+                            q, amax, T, use_scipy=False, mesh=True):
     """
     Wrapper around either:
         the (normally) numba-jitted function `__evaluate_mean_opacity_numba`
@@ -512,16 +528,22 @@ def evaluate_mean_opacities(q_arr, amax_arr, T_arr, kappa_arr,
     q_ = np.atleast_1d(q)
     amax_ = toQuantity(np.atleast_1d(amax), u.cm).to_value('cm')
     T_ = toQuantity(np.atleast_1d(T), u.K).to_value('K')
+    if not mesh:
+        assert q_.size == amax_.size == T_.size # if not mesh, sizes must match
 
-    args = (q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_)
+    args = (q_arr, amax_arr, T_arr, kappa_arr, q_, amax_, T_, mesh)
     use_sp = have_scipy and use_scipy
     if use_sp: kappa = __evaluate_mean_opacities_scipy(*args)
-    else:      kappa = __evaluate_mean_opacities_numba(*args)
+    else:
+        if mesh:      
+            kappa = __evaluate_mean_opacities_numba_mesh(*args[:-1])
+        else:
+            kappa = __evaluate_mean_opacities_numba_no_mesh(*args[:-1])
     if kappa.size == 1: return kappa[0,0,0] # return scalar
     return kappa
 
 def __evaluate_mean_opacities_scipy(q_arr, amax_arr, T_arr, kappa_arr,
-                                    q, amax, T):
+                                    q, amax, T, mesh):
     """
     Given the arrays of q, amax, T, and kappa(q, amax, T),
     evaluates kappa at the requested values using
@@ -553,12 +575,19 @@ def __evaluate_mean_opacities_scipy(q_arr, amax_arr, T_arr, kappa_arr,
     kappa
         the interpolated opacity [cm^2/g]
     """
-    x, y, z = np.meshgrid(q, np.log10(amax), np.log10(T), indexing='ij')
-    points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
+    if mesh:
+        x, y, z = np.meshgrid(q, np.log10(amax), np.log10(T), indexing='ij')
+        points = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T
+        shape = x.shape
+    else:
+        points = np.vstack([q, np.log10(amax), np.log10(T)]).T
+        shape = q.shape
+
+
     kappa = 10 ** interpn(
         (q_arr, np.log10(amax_arr), np.log10(T_arr)),
         np.log10(kappa_arr), points,
-        bounds_error=False, fill_value=np.nan).reshape(x.shape)
+        bounds_error=False, fill_value=np.nan).reshape(shape)
     if np.any(np.isnan(kappa)):
         print("Warning: some values are out of bounds and returned NaN.")
     return kappa
