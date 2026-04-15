@@ -18,6 +18,7 @@ This package is designed as a wrapper around [optool](https://github.com/cdomini
      - [Mandatory](#mandatory)
      - [Optional but recommended](#optional-but-recommended)
 - [Related Publication](#related-publication)
+- [Citing `growpacity`](#citing-growpacity)
 - [References](#references)
 
 ### Core Functionality
@@ -142,9 +143,28 @@ For scientific details and methodology, see the related publication:
 _Alexandros Ziampras, Tilman Birnstiel_
 [arXiv link to be added]
 
+### Citing `growpacity`
+
+If `growpacity` was helpful to you, please consider citing [this](https://ui.adsabs.harvard.edu/abs/2026ascl.soft03020Z/abstract) publication, or equivalently use the following BibTeX entry:
+
+```bibtex
+@software{2026ascl.soft03020Z,
+       author = {{Ziampras}, Alexandros and {Birnstiel}, Tilman},
+        title = "{growpacity: A computationally efficient dust opacity model suitable for coagulation models}",
+ howpublished = {Astrophysics Source Code Library, record ascl:2603.020},
+         year = 2026,
+        month = mar,
+          eid = {ascl:2603.020},
+archivePrefix = {ascl},
+       eprint = {2603.020},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2026ascl.soft03020Z},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+```
+
 ### References
 
-- Sphinx documentation can be found in the `docs/` folder.
+- Sphinx documentation can be found in the `docs/build/` folder, also hosted [here](https://alexziab.github.io/resources/growpacity/readthedocs/).
 - For additional details, see docstrings/comments in `growpacity/growpacity.py` and `growpacity/growpacity.c`.
 - optool: [https://github.com/cdominik/optool](https://github.com/cdominik/optool)
 - See publication for further context and usage recommendations.
